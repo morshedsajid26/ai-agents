@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import AlternativeGuideView from "./AlternativeGuideView";
+import UnifiedDashboard from "../../components/UnifiedDashboard";
 
 export default function Page() {
-  return <AlternativeGuideView />;
+  return <UnifiedDashboard defaultTab="alternative-guide" />;
 }

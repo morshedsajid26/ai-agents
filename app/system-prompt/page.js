@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import SystemPromptView from "./SystemPromptView";
+import UnifiedDashboard from "../../components/UnifiedDashboard";
 
 export default function Page() {
-  return <SystemPromptView />;
+  return <UnifiedDashboard defaultTab="system-prompt" />;
 }

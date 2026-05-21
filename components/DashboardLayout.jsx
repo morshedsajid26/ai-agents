@@ -4,11 +4,12 @@ import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
+import { useDashboard } from "./DashboardContext";
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
+  const { activeTab, theme, toggleTheme } = useDashboard();
   const [searchQuery, setSearchQuery] = useState("");
-  const [theme, setTheme] = useState("light");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Close sidebar on mobile/tablet screens initially after loading on client
@@ -17,31 +18,6 @@ export default function DashboardLayout({ children }) {
       setIsSidebarOpen(false);
     }
   }, []);
-
-  // Sync dark mode class on html tag
-  useEffect(() => {
-    const root = window.document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
-  };
-
-  // Determine activeTab depending on pathname
-  const getActiveTab = () => {
-    if (pathname === "/") return "fiverr-bot";
-    if (pathname.startsWith("/service-guide")) return "service-guide";
-    if (pathname.startsWith("/alternative-guide")) return "alternative-guide";
-    if (pathname.startsWith("/system-prompt")) return "system-prompt";
-    return "fiverr-bot";
-  };
-
-  const activeTab = getActiveTab();
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#f8fafc] dark:bg-[#070a13] font-sans antialiased text-slate-800 dark:text-slate-100 transition-colors duration-300 relative">

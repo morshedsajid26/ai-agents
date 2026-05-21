@@ -12,6 +12,7 @@ import {
   SettingsIcon,
   MoonIcon,
   SunIcon,
+  TrainingIcon,
 } from "./Icons";
 
 export default function Sidebar({
@@ -23,10 +24,8 @@ export default function Sidebar({
 }) {
   const { addToast } = useToast();
   const menuItems = [
-    { id: "fiverr-bot", label: "Fiverr Sales Bot", icon: BotIcon, href: "/" },
-    { id: "service-guide", label: "Service Guide", icon: GuideIcon, href: "/service-guide" },
-    { id: "alternative-guide", label: "Alternative Guide", icon: AlternateIcon, href: "/alternative-guide" },
-    { id: "system-prompt", label: "System Prompt", icon: PromptIcon, href: "/system-prompt" },
+    { id: "system-prompt", label: "System Prompt", icon: PromptIcon, href: "/" },
+    { id: "agent-training", label: "Agent Training", icon: TrainingIcon, href: "/agent-training" },
   ];
 
   const handleLinkClick = () => {

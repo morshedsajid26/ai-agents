@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import ServiceGuideView from "./ServiceGuideView";
+import UnifiedDashboard from "../../components/UnifiedDashboard";
 
 export default function Page() {
-  return <ServiceGuideView />;
+  return <UnifiedDashboard defaultTab="service-guide" />;
 }

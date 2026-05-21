@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import DashboardLayout from "../components/DashboardLayout";
 import { ToastProvider } from "../components/Toast";
+import { DashboardProvider } from "../components/DashboardContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,7 +27,9 @@ export default function RootLayout({ children }) {
     >
       <body className="min-h-full flex flex-col">
         <ToastProvider>
-          <DashboardLayout>{children}</DashboardLayout>
+          <DashboardProvider>
+            <DashboardLayout>{children}</DashboardLayout>
+          </DashboardProvider>
         </ToastProvider>
       </body>
     </html>

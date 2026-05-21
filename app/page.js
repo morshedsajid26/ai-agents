@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import FiverrBotView from "./FiverrBotView";
+import UnifiedDashboard from "../components/UnifiedDashboard";
 
 export default function Page() {
-  return <FiverrBotView />;
+  return <UnifiedDashboard defaultTab="system-prompt" />;
 }
