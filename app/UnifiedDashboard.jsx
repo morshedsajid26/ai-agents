@@ -16,6 +16,20 @@ import {
   PromptIcon,
 } from "../components/Icons";
 
+// Custom chevron down icon
+const ChevronDownIcon = ({ className = "w-3 h-3" }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+    strokeWidth="2.5"
+    stroke="currentColor"
+    className={className}
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+  </svg>
+);
+
 export default function UnifiedDashboard({ defaultTab }) {
   const { addToast } = useDashboard();
   const chatEndRef = useRef(null);
@@ -41,9 +55,12 @@ export default function UnifiedDashboard({ defaultTab }) {
     handleSendMessage,
     handleQuickDeploy,
     attachFile,
+    activeModel,
+    setActiveModel,
   } = useDashboard();
 
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
+  const [showModelMenu, setShowModelMenu] = useState(false);
 
   // Sync default tab if passed from individual page loaders
   useEffect(() => {
@@ -76,94 +93,60 @@ export default function UnifiedDashboard({ defaultTab }) {
   ];
 
   // Dynamic headers tailored to each tab
-  const renderHeader = () => {
+  const getHeaderInfo = () => {
     switch (activeTab) {
       case "system-prompt":
-        return (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 select-none shrink-0 mb-4 animate-fade-in">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0f172a] dark:text-slate-100">
-                System Prompt
-              </h1>
-              <p className="mt-1 text-xs sm:text-sm text-slate-550 dark:text-slate-400">
-                Define the core behavior and intelligence guidelines of your sales assistant.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-              <button
-                onClick={() => setShowHistory(!showHistory)}
-                className="flex items-center gap-2 px-3 py-2 border border-slate-200 dark:border-slate-800 text-xxs sm:text-xs font-semibold text-slate-700 dark:text-slate-200 rounded-lg bg-white dark:bg-[#0f172a] hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:shadow-xxs transition-all duration-200 cursor-pointer"
-              >
-                <HistoryIcon className="w-3.5 h-3.5 text-slate-500" />
-                <span>View History</span>
-              </button>
-              <button
-                onClick={handleQuickDeploy}
-                className="flex items-center gap-2 px-3 py-2 bg-[#0f172a] dark:bg-blue-600 hover:bg-slate-800 dark:hover:bg-blue-500 text-white text-xxs sm:text-xs font-semibold rounded-lg shadow-sm transition-all duration-200 cursor-pointer"
-              >
-                <LightningIcon className="w-3.5 h-3.5 text-amber-400 fill-current" />
-                <span>Quick Deploy</span>
-              </button>
-            </div>
-          </div>
-        );
+        return {
+          title: "System Prompt",
+          description: "Define the core behavior and intelligence guidelines of your sales assistant.",
+        };
       case "fiverr-bot":
-        return (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 select-none shrink-0 mb-4 animate-fade-in">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0f172a] dark:text-slate-100">
-                Fiverr Sales Bot
-              </h1>
-              <p className="mt-1 text-xs sm:text-sm text-slate-550 dark:text-slate-400">
-                Chat with the auto-responder agent to modify behavior or verify lead status.
-              </p>
-            </div>
-
-
-          </div>
-        );
+        return {
+          title: "Fiverr Sales Bot",
+          description: "Chat with the auto-responder agent to modify behavior or verify lead status.",
+        };
       case "service-guide":
-        return (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 select-none shrink-0 mb-4 animate-fade-in">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0f172a] dark:text-slate-100">
-                Service Guide
-              </h1>
-              <p className="mt-1 text-xs sm:text-sm text-slate-550 dark:text-slate-400">
-                Review and adjust onboarding sequences, dispatch check rules, and execution standards.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-250 dark:border-emerald-900/50 text-[10px] font-bold px-2.5 py-0.5 rounded tracking-wide">
-                OFFICIAL PROTOCOLS
-              </span>
-            </div>
-          </div>
-        );
+        return {
+          title: "Service Guide",
+          description: "Review and adjust onboarding sequences, dispatch check rules, and execution standards.",
+        };
       case "alternative-guide":
-        return (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 select-none shrink-0 mb-4 animate-fade-in">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0f172a] dark:text-slate-100">
-                Alternative Guide
-              </h1>
-              <p className="mt-1 text-xs sm:text-sm text-slate-550 dark:text-slate-400">
-                Review secondary protocols, backup drafts, and automated edge-case configurations.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 border border-purple-250 dark:border-purple-900/50 text-[10px] font-bold px-2.5 py-0.5 rounded tracking-wide">
-                BACKUP DIRECTIVES
-              </span>
-            </div>
-          </div>
-        );
+        return {
+          title: "Alternative Guide",
+          description: "Review secondary protocols, backup drafts, and automated edge-case configurations.",
+        };
       default:
         return null;
     }
+  };
+
+  // Dynamic headers tailored to each tab
+  const renderHeader = () => {
+    const info = getHeaderInfo();
+    if (!info) return null;
+
+    return (
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 select-none shrink-0 mb-4 animate-fade-in">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0f172a] dark:text-slate-100">
+            {info.title}
+          </h1>
+          <p className="mt-1 text-xs sm:text-sm text-slate-550 dark:text-slate-400">
+            {info.description}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className="flex items-center gap-2 px-3 py-2 border border-slate-200 dark:border-slate-800 text-xxs sm:text-xs font-semibold text-slate-700 dark:text-slate-200 rounded-lg bg-white dark:bg-[#0f172a] hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:shadow-xxs transition-all duration-200 cursor-pointer"
+          >
+            <HistoryIcon className="w-3.5 h-3.5 text-slate-500" />
+            <span>View History</span>
+          </button>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -199,8 +182,8 @@ export default function UnifiedDashboard({ defaultTab }) {
       {/* Main Messages scroll view */}
       <div className="flex-1 rounded-xl p-4 sm:p-6 flex flex-col min-h-[50px] mb-4 bg-slate-50/50 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800/40 relative">
 
-        {/* Revision History Overlay (System Prompt view only) */}
-        {activeTab === "system-prompt" && showHistory && (
+        {/* Revision History Overlay */}
+        {showHistory && (
           <div className="absolute top-4 right-4 z-20 w-72 sm:w-80 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-lg space-y-4 max-h-[220px] overflow-y-auto animate-scale-in">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
               <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
@@ -466,6 +449,40 @@ export default function UnifiedDashboard({ defaultTab }) {
               >
                 <QuoteIcon className="w-3.5 h-3.5" />
               </button>
+
+              {/* Model Selector Pill */}
+              <div className="relative inline-block ml-1">
+                <button
+                  type="button"
+                  onClick={() => setShowModelMenu(!showModelMenu)}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-555 dark:text-slate-450 text-xxs font-bold transition-all duration-150 cursor-pointer"
+                >
+                  <span>{activeModel}</span>
+                  <ChevronDownIcon className="w-2.5 h-2.5 opacity-60" />
+                </button>
+
+                {showModelMenu && (
+                  <div className="absolute left-0 bottom-8 z-30 w-32 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-lg p-1 shadow-lg text-[10px] space-y-0.5 animate-scale-in">
+                    {["GPT-5", "Claude(Haiku)", "Gemini Pro", "GPT-4o"].map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => {
+                          setActiveModel(m);
+                          setShowModelMenu(false);
+                        }}
+                        className={`w-full text-left px-2 py-1 rounded hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-655 dark:text-slate-350 cursor-pointer ${
+                          activeModel === m
+                            ? "text-indigo-650 dark:text-indigo-400 font-bold bg-indigo-50/50 dark:bg-slate-800/40"
+                            : ""
+                        }`}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex items-center gap-4 shrink-0">

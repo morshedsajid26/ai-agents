@@ -45,7 +45,7 @@ export default function DashboardLayout({ children }) {
           activeTab={activeTab}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          onMenuClick={() => setIsSidebarOpen(true)}
+          onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
         />
 
         {/* Main page body - fixed height container with inner scrolling */}

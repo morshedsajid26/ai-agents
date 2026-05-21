@@ -81,7 +81,7 @@ export default function AgentTrainingView() {
 
   // Local state for Agent Training
   const [trainingInput, setTrainingInput] = useState("");
-  const [activeModel, setActiveModel] = useState("GPT-5");
+  const [activeModel, setActiveModel] = useState("Claude(Haiku)");
   const [showModelMenu, setShowModelMenu] = useState(false);
   const [toolsActive, setToolsActive] = useState(true);
   const [fastActive, setFastActive] = useState(true);
@@ -532,7 +532,7 @@ export default function AgentTrainingView() {
                 </button>
 
                 {/* Speed Mode Pill */}
-                <button
+                {/* <button
                   type="button"
                   onClick={toggleFast}
                   className={`flex items-center gap-1 px-3 py-1 rounded-full border text-xxs font-bold transition-all duration-150 cursor-pointer ${fastActive
@@ -542,7 +542,7 @@ export default function AgentTrainingView() {
                 >
                   <LightningIcon className={`w-3 h-3 ${fastActive ? "text-amber-500 fill-current animate-pulse" : "text-emerald-500 dark:text-emerald-400 fill-current"}`} />
                   <span>{fastActive ? "Fast" : "Reasoning"}</span>
-                </button>
+                </button> */}
 
                 {/* Model Selector Pill */}
                 <div className="relative">
@@ -557,7 +557,7 @@ export default function AgentTrainingView() {
 
                   {showModelMenu && (
                     <div className="absolute left-0 bottom-8 z-30 w-36 bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 rounded-xl p-1.5 shadow-xl text-[10px] space-y-0.5 animate-scale-in">
-                      {["GPT-5", "Claude 3.5", "Gemini Pro", "GPT-4o"].map((m) => (
+                      {["GPT-5", "Claude(Haiku)", "Gemini Pro", "GPT-4o"].map((m) => (
                         <button
                           key={m}
                           type="button"

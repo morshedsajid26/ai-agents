@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { useToast } from "./Toast";
+import { useDashboard } from "./DashboardContext";
 import {
   DashboardIcon,
   BotIcon,
@@ -23,12 +24,16 @@ export default function Sidebar({
   setIsOpen,
 }) {
   const { addToast } = useToast();
+  const { setActiveTab } = useDashboard();
   const menuItems = [
     { id: "system-prompt", label: "System Prompt", icon: PromptIcon, href: "/" },
     { id: "agent-training", label: "Agent Training", icon: TrainingIcon, href: "/agent-training" },
   ];
 
-  const handleLinkClick = () => {
+  const handleItemClick = (itemId) => {
+    if (itemId === "system-prompt") {
+      setActiveTab("system-prompt");
+    }
     // Close sidebar on mobile after selecting an item
     if (isOpen && window.innerWidth < 1280) {
       setIsOpen(false);
@@ -43,7 +48,7 @@ export default function Sidebar({
     >
       {/* Header / Branding (Fixed Logo) */}
       <div className={`h-[76px] flex items-center border-b border-slate-100/50 dark:border-slate-800/50 shrink-0 ${
-        isOpen ? "justify-between px-6" : "justify-center px-2"
+        isOpen ? "px-6" : "justify-center px-2"
       }`}>
         {isOpen ? (
           <div className="flex items-center gap-3">
@@ -64,25 +69,6 @@ export default function Sidebar({
             <BotIcon className="h-5 w-5" />
           </div>
         )}
-
-        {/* Close Button / Toggle Button */}
-        {isOpen && (
-          <button
-            onClick={() => setIsOpen(false)}
-            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-650 dark:hover:text-slate-200 cursor-pointer shrink-0 ml-2"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="2.5"
-              stroke="currentColor"
-              className="w-5 h-5"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-            </svg>
-          </button>
-        )}
       </div>
 
       {/* Navigation Links */}
@@ -91,12 +77,12 @@ export default function Sidebar({
       }`}>
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = activeTab === item.id;
+          const isActive = item.id === "system-prompt" ? activeTab !== "agent-training" : activeTab === item.id;
           return (
             <Link
               key={item.id}
               href={item.href}
-              onClick={handleLinkClick}
+              onClick={() => handleItemClick(item.id)}
               title={!isOpen ? item.label : ""}
               className={`flex items-center rounded-lg text-sm font-medium tracking-wide transition-all duration-200 relative group cursor-pointer ${
                 isOpen

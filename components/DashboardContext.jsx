@@ -51,6 +51,7 @@ export const DashboardProvider = ({ children }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [botStatus, setBotStatus] = useState("Active");
+  const [activeModel, setActiveModel] = useState("Claude(Haiku)");
 
   const [history, setHistory] = useState([
     {
@@ -137,6 +138,18 @@ export const DashboardProvider = ({ children }) => {
     ],
   });
 
+  // Read theme from localStorage on mount
+  useEffect(() => {
+    try {
+      const storedTheme = localStorage.getItem("theme");
+      if (storedTheme) {
+        setTheme(storedTheme);
+      }
+    } catch (e) {
+      console.error("Failed to retrieve theme from localStorage:", e);
+    }
+  }, []);
+
   // Sync dark mode class on html tag
   useEffect(() => {
     const root = window.document.documentElement;
@@ -148,7 +161,15 @@ export const DashboardProvider = ({ children }) => {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+    setTheme((prev) => {
+      const next = prev === "light" ? "dark" : "light";
+      try {
+        localStorage.setItem("theme", next);
+      } catch (e) {
+        console.error("Failed to save theme to localStorage:", e);
+      }
+      return next;
+    });
   };
 
   const markTabAsRead = (tabId) => {
@@ -241,7 +262,7 @@ export const DashboardProvider = ({ children }) => {
       }
 
       // Generate split responses for each tab
-      const systemPromptReply = `System prompt instructions updated successfully!\n\nNew directive processed: "${currentInput}"\n\nThe updated instructions have been compiled into the standby memory slot. Click 'Quick Deploy' to push live.`;
+      const systemPromptReply = `System prompt instructions updated successfully via ${activeModel}!\n\nNew directive processed: "${currentInput}"\n\nThe updated behavior profile has been compiled and is now active across all sub-agent nodes.`;
       
       let fiverrReply = "";
       if (detectedBotStatus === "Paused") {
@@ -387,6 +408,8 @@ export const DashboardProvider = ({ children }) => {
         handleSendMessage,
         handleQuickDeploy,
         attachFile,
+        activeModel,
+        setActiveModel,
       }}
     >
       {children}
