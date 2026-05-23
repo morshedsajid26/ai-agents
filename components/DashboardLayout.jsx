@@ -12,12 +12,28 @@ export default function DashboardLayout({ children }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
+  const isAuthPage = [
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/verify-otp",
+    "/reset-password"
+  ].includes(pathname);
+
   // Close sidebar on mobile/tablet screens initially after loading on client
   useEffect(() => {
     if (typeof window !== "undefined" && window.innerWidth < 1280) {
       setIsSidebarOpen(false);
     }
   }, []);
+
+  if (isAuthPage) {
+    return (
+      <div className="min-h-screen w-screen bg-[#f8fafc] dark:bg-[#070a13] font-sans antialiased text-slate-800 dark:text-slate-100 transition-colors duration-300 flex flex-col overflow-y-auto">
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#f8fafc] dark:bg-[#070a13] font-sans antialiased text-slate-800 dark:text-slate-100 transition-colors duration-300 relative">
