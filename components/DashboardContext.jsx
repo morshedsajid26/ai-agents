@@ -2,7 +2,10 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import Cookies from "js-cookie";
 import { useToast } from "./Toast";
+import { apiFetch } from "../utils/api";
 
 const DashboardContext = createContext();
 
@@ -13,17 +16,108 @@ export const DashboardProvider = ({ children }) => {
   const pathname = usePathname();
   const [activeTab, setActiveTab] = useState("system-prompt");
   const [theme, setTheme] = useState("light");
+  const queryClient = useQueryClient();
+
+  const getInitialProfile = () => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("user-profile");
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          const cookieRole = Cookies.get("role");
+          if (cookieRole) {
+            parsed.role = cookieRole;
+          }
+          return parsed;
+        }
+      } catch (e) {}
+
+      try {
+        const cookieRole = Cookies.get("role");
+        if (cookieRole) {
+          return {
+            name: "User Two",
+            email: "user2@test.com",
+            avatarUrl: null,
+            role: cookieRole
+          };
+        }
+      } catch (e) {}
+    }
+    return {
+      name: "User Two",
+      email: "user2@test.com",
+      avatarUrl: null,
+      role: "USER"
+    };
+  };
+
+  const { data: queryProfile } = useQuery({
+    queryKey: ["profile"],
+    queryFn: async () => {
+      // 1. Try loading from localStorage/cookies first
+      try {
+        const savedProfile = localStorage.getItem("user-profile");
+        if (savedProfile) {
+          const parsed = JSON.parse(savedProfile);
+          const cookieRole = Cookies.get("role");
+          if (cookieRole) {
+            parsed.role = cookieRole;
+          }
+          return parsed;
+        }
+      } catch (e) {
+        console.error("Failed to read user-profile from localStorage:", e);
+      }
+
+      // 2. Fallback to API if not in localStorage
+      try {
+        const json = await apiFetch("/user/profile/me");
+        if (json.success && json.data) {
+          localStorage.setItem("user-profile", JSON.stringify(json.data));
+          return json.data;
+        }
+      } catch (error) {
+        console.error("Failed to load user profile in queryFn:", error);
+      }
+
+      return getInitialProfile();
+    },
+    initialData: getInitialProfile
+  });
+
+  const profile = queryProfile;
+
+  const setProfile = (newProfile) => {
+    let resolvedProfile = newProfile;
+    if (typeof newProfile === "function") {
+      resolvedProfile = newProfile(profile);
+    }
+    queryClient.setQueryData(["profile"], resolvedProfile);
+    try {
+      localStorage.setItem("user-profile", JSON.stringify(resolvedProfile));
+    } catch (e) {
+      console.error("Failed to write user-profile to localStorage:", e);
+      if (e.name === "QuotaExceededError" || e.code === 22) {
+        addToast("Failed to save changes: image size is too large for browser storage limit.", "error");
+      }
+    }
+  };
 
   // Sync activeTab with pathname on route changes
   useEffect(() => {
     if (pathname === "/agent-training") {
       setActiveTab("agent-training");
+    } else if (pathname === "/user-management") {
+      setActiveTab("user-management");
     } else if (pathname === "/service-guide") {
       setActiveTab("service-guide");
     } else if (pathname === "/alternative-guide") {
       setActiveTab("alternative-guide");
     } else if (pathname === "/system-prompt") {
       setActiveTab("system-prompt");
+    } else if (pathname === "/settings") {
+      setActiveTab("settings");
     } else if (pathname === "/") {
       const validDashboardTabs = ["system-prompt", "fiverr-bot", "service-guide", "alternative-guide"];
       setActiveTab((current) => {
@@ -51,7 +145,7 @@ export const DashboardProvider = ({ children }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [botStatus, setBotStatus] = useState("Active");
-  const [activeModel, setActiveModel] = useState("Claude(Haiku)");
+  const [activeModel, setActiveModel] = useState("CLAUDE_HAIKU");
 
   const [history, setHistory] = useState([
     {
@@ -384,6 +478,8 @@ export const DashboardProvider = ({ children }) => {
   return (
     <DashboardContext.Provider
       value={{
+        profile,
+        setProfile,
         activeTab,
         setActiveTab,
         theme,

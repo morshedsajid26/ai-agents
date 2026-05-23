@@ -1,9 +1,34 @@
 "use client";
 
-import React from "react";
-import { SearchIcon, BellIcon, HelpIcon } from "./Icons";
+import React, { useState, useRef, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Settings, LogOut } from "lucide-react";
+import { useDashboard } from "./DashboardContext";
+import { SearchIcon, HelpIcon, SunIcon, MoonIcon } from "./Icons";
 
 export default function Topbar({ activeTab, searchQuery, setSearchQuery, onMenuClick }) {
+  const { theme, toggleTheme, profile } = useDashboard();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleDropdownToggle = () => {
+    setIsDropdownOpen((prev) => !prev);
+  };
+
   // Dynamic search input placeholder based on active tab
   const getSearchPlaceholder = () => {
     switch (activeTab) {
@@ -24,8 +49,7 @@ export default function Topbar({ activeTab, searchQuery, setSearchQuery, onMenuC
 
   // Render profile section matching the screenshots dynamically
   const renderProfileSection = () => {
-    const avatarUrl =
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120&h=120";
+    const avatarUrl = profile.avatarUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120&h=120";
 
     switch (activeTab) {
       case "dashboard":
@@ -33,11 +57,11 @@ export default function Topbar({ activeTab, searchQuery, setSearchQuery, onMenuC
           <div className="flex items-center gap-3 pl-3 sm:pl-4 border-l border-slate-200/80 dark:border-slate-800 shrink-0">
             <img
               src={avatarUrl}
-              alt="Alex Chen"
+              alt={profile.name}
               className="w-8 h-8 rounded-full object-cover border border-slate-100 dark:border-slate-800"
             />
             <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 hidden sm:inline">
-              Alex Chen
+              {profile.name}
             </span>
           </div>
         );
@@ -47,7 +71,7 @@ export default function Topbar({ activeTab, searchQuery, setSearchQuery, onMenuC
           <div className="flex items-center gap-3 pl-3 sm:pl-4 border-l border-slate-200/80 dark:border-slate-800 shrink-0">
             <div className="text-right hidden sm:block">
               <p className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-none">
-                Alex Rivers
+                {profile.name}
               </p>
               <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-0.5">
                 Account Manager
@@ -55,7 +79,7 @@ export default function Topbar({ activeTab, searchQuery, setSearchQuery, onMenuC
             </div>
             <img
               src={avatarUrl}
-              alt="Alex Rivers"
+              alt={profile.name}
               className="w-8 h-8 rounded-full object-cover border border-slate-100 dark:border-slate-800"
             />
           </div>
@@ -65,12 +89,15 @@ export default function Topbar({ activeTab, searchQuery, setSearchQuery, onMenuC
       case "system-prompt":
       default:
         return (
-          <div className="flex items-center shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
             <img
               src={avatarUrl}
               alt="User profile"
-              className="w-8 h-8 rounded-full object-cover border border-slate-100 dark:border-slate-800"
+              className="w-8 h-8 rounded-full object-cover border border-slate-100 dark:border-slate-850 shadow-xs"
             />
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 hidden sm:inline">
+              {profile.name}
+            </span>
           </div>
         );
     }
@@ -114,11 +141,18 @@ export default function Topbar({ activeTab, searchQuery, setSearchQuery, onMenuC
       </div>
 
       {/* Action Icons and Profile */}
-      <div className="flex items-center gap-2.5 sm:gap-4 shrink-0">
-        {/* Notifications Icon */}
-        <button className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 relative p-1.5 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200 cursor-pointer">
-          <BellIcon className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-[#ef4444] rounded-full border border-white dark:border-[#0b0f19]" />
+      <div className="flex items-center gap-2.5 sm:gap-4 shrink-0 relative" ref={dropdownRef}>
+        {/* Light/Dark Toggle Button (replacing notification button) */}
+        <button
+          onClick={toggleTheme}
+          className="text-slate-400 dark:text-slate-555 hover:text-slate-705 dark:hover:text-slate-355 p-1.5 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200 cursor-pointer"
+          title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {theme === "dark" ? (
+            <SunIcon className="w-5 h-5 text-amber-500 animate-spin-slow" />
+          ) : (
+            <MoonIcon className="w-5 h-5 text-slate-400 dark:text-slate-550" />
+          )}
         </button>
 
         {/* Help/FAQ Icon - Hidden on very small screens to fit layout */}
@@ -127,7 +161,37 @@ export default function Topbar({ activeTab, searchQuery, setSearchQuery, onMenuC
         </button>
 
         {/* Dynamic Profile Section */}
-        {renderProfileSection()}
+        <div 
+          onClick={handleDropdownToggle}
+          className="cursor-pointer select-none active:scale-95 transition-transform"
+        >
+          {renderProfileSection()}
+        </div>
+
+        {/* Dropdown Menu */}
+        {isDropdownOpen && (
+          <div className="absolute right-0 top-[52px] z-50 w-44 rounded-xl border border-slate-200/80 bg-white p-1.5 shadow-lg dark:border-slate-800/80 dark:bg-[#0f172a] animate-fade-in">
+            <Link
+              href="/settings"
+              onClick={() => setIsDropdownOpen(false)}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:text-slate-350 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+            >
+              <Settings className="h-4 w-4 text-slate-400" />
+              <span>Settings</span>
+            </Link>
+            <hr className="my-1 border-slate-100 dark:border-slate-800" />
+            <button
+              onClick={() => {
+                setIsDropdownOpen(false);
+                router.push("/login");
+              }}
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50/60 dark:text-rose-455 dark:hover:bg-rose-950/20 transition-colors cursor-pointer text-left"
+            >
+              <LogOut className="h-4 w-4 text-rose-550" />
+              <span>Logout</span>
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );

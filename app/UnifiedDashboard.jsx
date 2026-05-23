@@ -30,6 +30,12 @@ const ChevronDownIcon = ({ className = "w-3 h-3" }) => (
   </svg>
 );
 
+const modelLabels = {
+  GPT: "GPT",
+  CLAUDE_HAIKU: "Claude (Haiku)",
+  SONNET: "Claude (Sonnet)"
+};
+
 export default function UnifiedDashboard({ defaultTab }) {
   const { addToast } = useDashboard();
   const chatEndRef = useRef(null);
@@ -457,13 +463,13 @@ export default function UnifiedDashboard({ defaultTab }) {
                   onClick={() => setShowModelMenu(!showModelMenu)}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-555 dark:text-slate-450 text-xxs font-bold transition-all duration-150 cursor-pointer"
                 >
-                  <span>{activeModel}</span>
+                  <span>{modelLabels[activeModel] || activeModel}</span>
                   <ChevronDownIcon className="w-2.5 h-2.5 opacity-60" />
                 </button>
 
                 {showModelMenu && (
                   <div className="absolute left-0 bottom-8 z-30 w-32 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-lg p-1 shadow-lg text-[10px] space-y-0.5 animate-scale-in">
-                    {["GPT-5", "Claude(Haiku)", "Gemini Pro", "GPT-4o"].map((m) => (
+                    {["GPT", "CLAUDE_HAIKU", "SONNET"].map((m) => (
                       <button
                         key={m}
                         type="button"
@@ -477,7 +483,7 @@ export default function UnifiedDashboard({ defaultTab }) {
                             : ""
                         }`}
                       >
-                        {m}
+                        {modelLabels[m] || m}
                       </button>
                     ))}
                   </div>

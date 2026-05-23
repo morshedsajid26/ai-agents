@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { useDashboard } from "./DashboardContext";
 import { useToast } from "./Toast";
 import {
-  HistoryIcon,
   LightningIcon,
   PaperclipIcon,
   CollaborateIcon,
@@ -33,6 +32,12 @@ const ChevronDownIcon = ({ className = "w-3 h-3" }) => (
     <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
   </svg>
 );
+
+const modelLabels = {
+  GPT: "GPT",
+  CLAUDE_HAIKU: "Claude (Haiku)",
+  SONNET: "Claude (Sonnet)"
+};
 
 export default function UnifiedDashboard({ defaultTab }) {
   const { addToast } = useDashboard();
@@ -138,16 +143,7 @@ export default function UnifiedDashboard({ defaultTab }) {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <button
-            type="button"
-            onClick={() => setShowHistory(!showHistory)}
-            className="flex items-center gap-2 px-3 py-2 border border-slate-200 dark:border-slate-800 text-xxs sm:text-xs font-semibold text-slate-700 dark:text-slate-200 rounded-lg bg-white dark:bg-[#0f172a] hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:shadow-xxs transition-all duration-200 cursor-pointer"
-          >
-            <HistoryIcon className="w-3.5 h-3.5 text-slate-500" />
-            <span>View History</span>
-          </button>
-        </div>
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap" />
       </div>
     );
   };
@@ -185,38 +181,7 @@ export default function UnifiedDashboard({ defaultTab }) {
       {/* Main Messages scroll view */}
       <div className="flex-1 rounded-xl p-4 sm:p-6 flex flex-col min-h-[50px] mb-4 bg-slate-50/50 dark:bg-slate-900/20 border border-slate-100 dark:border-slate-800/40 relative">
 
-        {/* Revision History Overlay */}
-        {showHistory && (
-          <div className="absolute top-4 right-4 z-20 w-72 sm:w-80 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-lg space-y-4 max-h-[220px] overflow-y-auto animate-scale-in">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-              <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                Revision History
-              </span>
-              <button
-                onClick={() => setShowHistory(false)}
-                className="text-slate-400 hover:text-slate-600 text-xxs font-bold cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-            <div className="space-y-3">
-              {history.map((rev) => (
-                <div
-                  key={rev.id}
-                  className="p-2.5 rounded bg-slate-50 dark:bg-[#161f30] text-xxs leading-relaxed border border-slate-100 dark:border-slate-850"
-                >
-                  <div className="flex justify-between text-slate-400 dark:text-slate-500 font-bold mb-1">
-                    <span>Draft #{rev.id.toString().slice(-4)}</span>
-                    <span>{rev.time}</span>
-                  </div>
-                  <p className="text-slate-650 dark:text-slate-300 font-medium italic">
-                    "{rev.text}"
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+
 
         {/* Conversation List / Document Display */}
         <div className="flex-1 flex flex-col min-h-0 overflow-y-auto pr-1 scrollbar-thin">
@@ -347,15 +312,15 @@ export default function UnifiedDashboard({ defaultTab }) {
                 <button
                   type="button"
                   onClick={() => setShowModelMenu(!showModelMenu)}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-550 dark:text-slate-450 text-xxs font-bold transition-all duration-150 cursor-pointer"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-555 dark:text-slate-450 text-xxs font-bold transition-all duration-150 cursor-pointer"
                 >
-                  <span>{activeModel}</span>
+                  <span>{modelLabels[activeModel] || activeModel}</span>
                   <ChevronDownIcon className="w-2.5 h-2.5 opacity-60" />
                 </button>
 
                 {showModelMenu && (
                   <div className="absolute left-0 bottom-8 z-30 w-32 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-lg p-1 shadow-lg text-[10px] space-y-0.5 animate-scale-in">
-                    {["GPT-5", "Claude(Haiku)", "Gemini Pro", "GPT-4o"].map((m) => (
+                    {["GPT", "CLAUDE_HAIKU", "SONNET"].map((m) => (
                       <button
                         key={m}
                         type="button"
@@ -369,7 +334,7 @@ export default function UnifiedDashboard({ defaultTab }) {
                             : ""
                         }`}
                       >
-                        {m}
+                        {modelLabels[m] || m}
                       </button>
                     ))}
                   </div>

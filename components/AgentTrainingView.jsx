@@ -3,6 +3,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useDashboard } from "./DashboardContext";
 import { useToast } from "./Toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiFetch } from "../utils/api";
+import toast from "react-hot-toast";
 import {
   PaperclipIcon,
   LightningIcon,
@@ -81,7 +84,12 @@ export default function AgentTrainingView() {
 
   // Local state for Agent Training
   const [trainingInput, setTrainingInput] = useState("");
-  const [activeModel, setActiveModel] = useState("Claude(Haiku)");
+  const [activeModel, setActiveModel] = useState("CLAUDE_HAIKU");
+  const modelLabels = {
+    GPT: "GPT",
+    CLAUDE_HAIKU: "Claude (Haiku)",
+    SONNET: "Claude (Sonnet)"
+  };
   const [showModelMenu, setShowModelMenu] = useState(false);
   const [toolsActive, setToolsActive] = useState(true);
   const [fastActive, setFastActive] = useState(true);
@@ -93,17 +101,8 @@ export default function AgentTrainingView() {
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
 
-  // Interactive Training Simulation states
-  const [trainingLogs, setTrainingLogs] = useState([
-    {
-      id: 1,
-      role: "assistant",
-      text: "System initialized. I am ready to process training instructions, augment agent policies, or ingest custom dataset parameters.",
-      time: "10:56 AM",
-    }
-  ]);
-  const [isTraining, setIsTraining] = useState(false);
-  const [trainingStep, setTrainingStep] = useState("");
+  const queryClient = useQueryClient();
+  const [selectedTrainingId, setSelectedTrainingId] = useState(null);
 
   const consoleEndRef = useRef(null);
 
@@ -112,15 +111,87 @@ export default function AgentTrainingView() {
     setActiveTab("agent-training");
   }, [setActiveTab]);
 
+  // Fetch training logs from GET /agent-training
+  const { data: serverTrainingData = [] } = useQuery({
+    queryKey: ["agent-training"],
+    queryFn: async () => {
+      const json = await apiFetch("/agent-training");
+      return json.data;
+    }
+  });
+
+  // Fetch detailed single training from GET /agent-training/:trainingId
+  const { data: trainingDetail, isLoading: isLoadingDetail } = useQuery({
+    queryKey: ["agent-training-detail", selectedTrainingId],
+    queryFn: async () => {
+      if (!selectedTrainingId) return null;
+      const json = await apiFetch(`/agent-training/${selectedTrainingId}`);
+      return json.data;
+    },
+    enabled: !!selectedTrainingId,
+  });
+
+  // POST /agent-training Mutation using Form Data
+  const trainMutation = useMutation({
+    mutationFn: async (formData) => {
+      const json = await apiFetch("/agent-training", {
+        method: "POST",
+        body: formData,
+      });
+      return json.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["agent-training"] });
+      addToast("Agent training complete! Core weights compiled.", "success");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to train agent");
+    }
+  });
+
+  // Derive chat history dynamically from queries
+  const trainingLogs = React.useMemo(() => {
+    const logs = [];
+
+    const items = Array.isArray(serverTrainingData)
+      ? [...serverTrainingData].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+      : (serverTrainingData && typeof serverTrainingData === "object" && serverTrainingData.id)
+        ? [serverTrainingData]
+        : [];
+
+    items.forEach((item) => {
+      const timeString = new Date(item.createdAt).toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
+
+      // User's training prompt
+      logs.push({
+        id: item.id,
+        role: "user",
+        text: item.prompt,
+        time: timeString,
+        model: modelLabels[item.modelName] || item.modelName,
+        files: item.documentPath ? [item.documentPath.split("/").pop()] : [],
+        isClickable: true,
+      });
+    });
+
+    return logs;
+  }, [serverTrainingData]);
+
+  const isTraining = trainMutation.isPending;
+
   // Autoscroll chat logs
   useEffect(() => {
     consoleEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [trainingLogs, isTraining, trainingStep]);
+  }, [trainingLogs, isTraining]);
 
   const handleModelChange = (model) => {
     setActiveModel(model);
     setShowModelMenu(false);
-    addToast(`Model switched to ${model}`, "info");
+    addToast(`Model switched to ${modelLabels[model] || model}`, "info");
   };
 
   const toggleTool = () => {
@@ -150,9 +221,10 @@ export default function AgentTrainingView() {
       id: Date.now().toString(),
       name: file.name,
       size: (file.size / 1024).toFixed(1) + " KB",
+      file: file,
     };
 
-    setAttachedFiles((prev) => [...prev, fileData]);
+    setAttachedFiles([fileData]); // Allow 1 document at a time
     addToast(`Attached file: ${file.name}`, "success");
     e.target.value = "";
   };
@@ -211,81 +283,20 @@ export default function AgentTrainingView() {
 
   const handleTrainSubmit = (e) => {
     if (e) e.preventDefault();
-    if (!trainingInput.trim() && attachedFiles.length === 0 && attachedImages.length === 0) return;
+    if (!trainingInput.trim() && attachedFiles.length === 0) return;
 
-    const timeString = new Date().toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-
-    let userText = trainingInput.trim();
-    if (!userText) {
-      const parts = [];
-      if (attachedFiles.length > 0) {
-        parts.push(`Ingested files: ${attachedFiles.map((f) => f.name).join(", ")}`);
-      }
-      if (attachedImages.length > 0) {
-        parts.push(`Uploaded images: ${attachedImages.map((img) => img.name).join(", ")}`);
-      }
-      userText = parts.join(" | ");
+    const formData = new FormData();
+    formData.append("modelName", activeModel);
+    formData.append("prompt", trainingInput.trim());
+    if (attachedFiles.length > 0) {
+      formData.append("document", attachedFiles[0].file);
     }
 
-    const userInstruction = {
-      id: Date.now(),
-      role: "user",
-      text: userText,
-      time: timeString,
-      model: activeModel,
-      files: attachedFiles.map((f) => f.name),
-      images: attachedImages.map((img) => img.url),
-    };
+    trainMutation.mutate(formData);
 
-    setTrainingLogs((prev) => [...prev, userInstruction]);
     setTrainingInput("");
     setAttachedFiles([]);
     setAttachedImages([]);
-    setIsTraining(true);
-
-    // Multi-step training log simulation
-    const steps = [
-      "Vectorizing training input...",
-      "Calculating loss alignment (Epoch 1/3)...",
-      "Updating neural weights (Epoch 2/3)...",
-      "Testing constraint checks (Epoch 3/3)...",
-      "Evaluating agent compliance matrix...",
-      "Agent policy optimized successfully!"
-    ];
-
-    let currentStepIndex = 0;
-    setTrainingStep(steps[0]);
-
-    const stepInterval = setInterval(() => {
-      currentStepIndex++;
-      if (currentStepIndex < steps.length) {
-        setTrainingStep(steps[currentStepIndex]);
-      } else {
-        clearInterval(stepInterval);
-        setIsTraining(false);
-        setTrainingStep("");
-
-        // Add agent response
-        setTrainingLogs((prev) => [
-          ...prev,
-          {
-            id: Date.now() + 1,
-            role: "assistant",
-            text: `Agent policy update complete! Swapped core routing logs using ${activeModel}. Ingested prompt weights have been merged into the model's live directive stack. Test query metrics show 99.8% compliance accuracy.`,
-            time: new Date().toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: true,
-            }),
-          }
-        ]);
-        addToast("Agent training complete! Core weights compiled.", "success");
-      }
-    }, 800);
   };
 
   return (
@@ -326,7 +337,10 @@ export default function AgentTrainingView() {
                 className={`flex ${log.role === "user" ? "justify-end" : "justify-start"} animate-fade-in`}
               >
                 <div
-                  className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-4 shadow-xs border ${log.role === "user"
+                  onClick={() => log.isClickable && setSelectedTrainingId(log.id)}
+                  className={`max-w-[85%] sm:max-w-[75%] rounded-2xl p-4 shadow-xs border ${
+                    log.isClickable ? "cursor-pointer hover:border-indigo-500 dark:hover:border-indigo-700 hover:shadow-md transition-all duration-200 animate-pulse-once" : ""
+                  } ${log.role === "user"
                     ? "bg-slate-800 text-white border-slate-700 rounded-br-none"
                     : "bg-white dark:bg-[#0f172a] text-slate-700 dark:text-slate-200 border-slate-200/60 dark:border-slate-800/70 rounded-bl-none"
                     }`}
@@ -364,7 +378,7 @@ export default function AgentTrainingView() {
                   {log.model && (
                     <div className="mt-2 pt-2 border-t border-slate-700/40 flex justify-between items-center text-[9px] opacity-60">
                       <span>Model: {log.model}</span>
-                      <span>Target: Live Weights</span>
+                      <span>Click to view live weight payload</span>
                     </div>
                   )}
                 </div>
@@ -376,13 +390,13 @@ export default function AgentTrainingView() {
               <div className="flex justify-start animate-fade-in">
                 <div className="bg-white dark:bg-[#0f172a] text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-slate-800/70 rounded-2xl rounded-bl-none p-4 flex flex-col gap-3 min-w-[200px] shadow-sm">
                   <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 rounded-full border-2 border-indigo-200 animate-spin border-t-indigo-650" />
+                    <div className="h-4 w-4 rounded-full border-2 border-indigo-250 animate-spin border-t-indigo-650" />
                     <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
                       TRAINING IN PROGRESS
                     </span>
                   </div>
                   <p className="text-xs font-mono font-medium animate-pulse text-slate-500">
-                    {trainingStep}
+                    Optimizing weights using {activeModel}...
                   </p>
                 </div>
               </div>
@@ -551,21 +565,21 @@ export default function AgentTrainingView() {
                     onClick={() => setShowModelMenu(!showModelMenu)}
                     className="flex items-center gap-1 px-3 py-1 rounded-full border border-slate-250 dark:border-slate-800 hover:bg-slate-200/50 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 text-xxs font-bold transition-all duration-150 cursor-pointer"
                   >
-                    <span>{activeModel}</span>
+                    <span>{modelLabels[activeModel] || activeModel}</span>
                     <ChevronDownIcon className="w-2.5 h-2.5 opacity-60" />
                   </button>
 
                   {showModelMenu && (
                     <div className="absolute left-0 bottom-8 z-30 w-36 bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 rounded-xl p-1.5 shadow-xl text-[10px] space-y-0.5 animate-scale-in">
-                      {["GPT-5", "Claude(Haiku)", "Gemini Pro", "GPT-4o"].map((m) => (
+                      {["GPT", "CLAUDE_HAIKU", "SONNET"].map((m) => (
                         <button
                           key={m}
                           type="button"
                           onClick={() => handleModelChange(m)}
-                          className={`w-full text-left px-2 py-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-355 cursor-pointer ${activeModel === m ? "text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50/50 dark:bg-slate-800/40" : ""
+                          className={`w-full text-left px-2 py-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-605 dark:text-slate-355 cursor-pointer ${activeModel === m ? "text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50/50 dark:bg-slate-800/40" : ""
                             }`}
                         >
-                          {m}
+                          {modelLabels[m]}
                         </button>
                       ))}
                     </div>
@@ -591,6 +605,74 @@ export default function AgentTrainingView() {
 
         </div>
       </div>
+
+      {/* Premium Detail Modal for Training Run */}
+      {selectedTrainingId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs select-none">
+          <div className="w-full max-w-2xl rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xl dark:border-slate-800/80 dark:bg-[#0b0f19] animate-fade-in relative max-h-[85vh] flex flex-col">
+            <button
+              onClick={() => setSelectedTrainingId(null)}
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-850 transition-all cursor-pointer font-bold text-lg"
+            >
+              ×
+            </button>
+
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 mb-4">
+              <BotIcon className="w-5 h-5 text-indigo-500" />
+              <span>Training Run Details</span>
+            </h3>
+
+            {isLoadingDetail ? (
+              <div className="flex-1 flex justify-center items-center py-20">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
+              </div>
+            ) : !trainingDetail ? (
+              <div className="flex-1 text-center py-20 text-slate-400 dark:text-slate-500">
+                Failed to load training details.
+              </div>
+            ) : (
+              <div className="flex-1 overflow-y-auto pr-1 space-y-4 text-xs sm:text-sm font-medium text-slate-655 dark:text-slate-400">
+                <div className="grid grid-cols-2 gap-4 border-b border-slate-100 dark:border-slate-800/60 pb-3">
+                  <div>
+                    <span className="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold">Model Engine</span>
+                    <span className="font-bold text-slate-900 dark:text-slate-100">
+                      {modelLabels[trainingDetail.modelName] || trainingDetail.modelName}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold">Executed At</span>
+                    <span className="font-semibold text-slate-900 dark:text-slate-200">
+                      {new Date(trainingDetail.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+                {trainingDetail.documentPath && (
+                  <div className="border-b border-slate-100 dark:border-slate-800/60 pb-3">
+                    <span className="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold mb-1">Attached Dataset</span>
+                    <a
+                      href={trainingDetail.documentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-350 font-bold"
+                    >
+                      <FileIcon className="w-4 h-4" />
+                      <span>{trainingDetail.documentPath.split("/").pop()}</span>
+                    </a>
+                  </div>
+                )}
+
+                <div>
+                  <span className="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold mb-1">Prompt Weight Guidelines</span>
+                  <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-100 dark:border-slate-850 font-mono text-xxs sm:text-xs leading-relaxed whitespace-pre-wrap max-h-60 overflow-y-auto text-slate-700 dark:text-slate-300">
+                    {trainingDetail.prompt}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   );

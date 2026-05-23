@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Mail, Sun, Moon, ArrowRight, Bot } from "lucide-react";
@@ -9,28 +11,57 @@ import toast from "react-hot-toast";
 import InputField from "../../components/InputField";
 import Password from "../../components/Password";
 import { useDashboard } from "../../components/DashboardContext";
+import { apiFetch } from "../../utils/api";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { theme, toggleTheme } = useDashboard();
+  const { theme, toggleTheme, setProfile } = useDashboard();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async (e) => {
+  const loginMutation = useMutation({
+    mutationFn: async ({ email, password }) => {
+      return await apiFetch("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+    },
+    onSuccess: (json) => {
+      const { accessToken, refreshToken, user } = json.data;
+
+      // Role check
+      if (!user || !user.role) {
+        toast.error("Login failed: User role not assigned.");
+        return;
+      }
+
+      // Cookie storage
+      Cookies.set("accessToken", accessToken, { expires: 1, path: "/" });
+      Cookies.set("refreshToken", refreshToken, { expires: 7, path: "/" });
+      Cookies.set("role", user.role, { expires: 1, path: "/" });
+     
+
+      // Update context & local storage profile state
+      setProfile(user);
+
+      toast.success(json.message || "Successfully logged in!");
+      router.push("/");
+    },
+    onError: (error) => {
+      console.error("Login error:", error);
+      toast.error(error.message || "An error occurred during login. Please try again.");
+    },
+  });
+
+  const isLoading = loginMutation.isPending;
+
+  const handleLogin = (e) => {
     e.preventDefault();
     if (!email || !password) {
       toast.error("Please fill in all fields");
       return;
     }
-
-    setIsLoading(true);
-    // Simulate API request
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
-
-    toast.success("Successfully logged in!");
-    router.push("/");
+    loginMutation.mutate({ email, password });
   };
 
   return (

@@ -5,8 +5,10 @@ import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import { useDashboard } from "./DashboardContext";
+import { useAuthCheck } from "../hooks/useAuthCheck";
 
 export default function DashboardLayout({ children }) {
+  const authorized = useAuthCheck();
   const pathname = usePathname();
   const { activeTab, theme, toggleTheme } = useDashboard();
   const [searchQuery, setSearchQuery] = useState("");
@@ -26,6 +28,14 @@ export default function DashboardLayout({ children }) {
       setIsSidebarOpen(false);
     }
   }, []);
+
+  if (!authorized) {
+    return (
+      <div className="min-h-screen w-screen bg-[#f8fafc] dark:bg-[#070a13] flex items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+      </div>
+    );
+  }
 
   if (isAuthPage) {
     return (
