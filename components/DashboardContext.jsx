@@ -122,9 +122,9 @@ export const DashboardProvider = ({ children }) => {
       const validDashboardTabs = ["system-prompt", "fiverr-bot", "service-guide", "alternative-guide"];
       setActiveTab((current) => {
         if (!validDashboardTabs.includes(current)) {
-          return "system-prompt";
+          return "fiverr-bot";
         }
-        return current;
+        return current === "system-prompt" ? "fiverr-bot" : current;
       });
     }
   }, [pathname]);
@@ -146,6 +146,37 @@ export const DashboardProvider = ({ children }) => {
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [botStatus, setBotStatus] = useState("Active");
   const [activeModel, setActiveModel] = useState("CLAUDE_HAIKU");
+  const [activeConversationId, setActiveConversationIdState] = useState(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = sessionStorage.getItem("activeConversationId");
+        if (stored) setActiveConversationIdState(stored);
+      } catch (e) {}
+    }
+  }, []);
+
+  const setActiveConversationId = (id) => {
+    setActiveConversationIdState(id);
+    if (typeof window !== "undefined") {
+      try {
+        if (id) sessionStorage.setItem("activeConversationId", id);
+        else sessionStorage.removeItem("activeConversationId");
+      } catch (e) {}
+    }
+  };
+
+  const { data: conversationMessagesResponse, isLoading: isLoadingMessages } = useQuery({
+    queryKey: ["messages", activeConversationId],
+    queryFn: async () => {
+      if (!activeConversationId) return null;
+      return apiFetch(`/message/conversation/${activeConversationId}`);
+    },
+    enabled: !!activeConversationId,
+  });
+
+  const conversationMessages = conversationMessagesResponse?.data || [];
 
   const [history, setHistory] = useState([
     {
@@ -162,74 +193,10 @@ export const DashboardProvider = ({ children }) => {
 
   // Combined messages state for all views
   const [messages, setMessages] = useState({
-    "system-prompt": [
-      {
-        id: 1,
-        sender: "ai",
-        text: "Hello! I am your System Prompt Architect. I manage the core instructions and personality guidelines of the Fiverr Sales Bot. Tell me what behaviors to adjust, or attach files to augment my knowledge base.",
-        time: "14:02 PM",
-      },
-    ],
-    "fiverr-bot": [
-      {
-        id: 1,
-        sender: "ai",
-        text: "Hello! I am your Fiverr Sales Bot controller. I monitor incoming buyer messages, classify lead intents, and draft quick replies. How can I assist you in managing the auto-responder today?",
-        time: "14:02 PM",
-      },
-      {
-        id: 2,
-        sender: "user",
-        text: "Show me the last lead status from inbox.",
-        time: "14:03 PM",
-      },
-      {
-        id: 3,
-        sender: "ai",
-        text: "Latest lead: 'jack_dev_99'. Intent: 'Full-stack React CRM build'. Onboarding questionnaire dispatched. Status is currently pending client reply.",
-        time: "14:03 PM",
-      },
-    ],
-    "service-guide": [
-      {
-        id: 1,
-        sender: "ai",
-        text: "Hello! I am your Service Guide Assistant. I hold the protocols for client onboarding, order dispatch checks, intake form parsing, and greeting automations. How can I help you design or query these standards today?",
-        time: "14:02 PM",
-      },
-      {
-        id: 2,
-        sender: "user",
-        text: "Explain the intake form automation sequence.",
-        time: "14:05 PM",
-      },
-      {
-        id: 3,
-        sender: "ai",
-        text: "Sure! The Initial Intake Form sequence follows these steps:\n1. order placed by buyer.\n2. automatically dispatching requirements questionnaire link.\n3. tracking submission state.\n4. using AI parser to auto-fill CRM customer metrics.",
-        time: "14:06 PM",
-      },
-    ],
-    "alternative-guide": [
-      {
-        id: 1,
-        sender: "ai",
-        text: "Hello! I am your Fallback Directive Assistant. I manage alternate workflow configurations, backup responses, and routing tables for leads that fall outside normal boundaries. How can I help you tweak fallback directives?",
-        time: "14:02 PM",
-      },
-      {
-        id: 2,
-        sender: "user",
-        text: "Show active fallback routing rules.",
-        time: "14:06 PM",
-      },
-      {
-        id: 3,
-        sender: "ai",
-        text: "Current Fallback Status:\n- Standard domain escape: Reroute to Operator Lobby.\n- Unclassified queries: Dispatch 'General Intake' proposal.\n- API timeout trigger: Cache message and retry in 60s.",
-        time: "14:07 PM",
-      },
-    ],
+    "system-prompt": [],
+    "fiverr-bot": [],
+    "service-guide": [],
+    "alternative-guide": [],
   });
 
   // Read theme from localStorage on mount
@@ -296,28 +263,9 @@ export const DashboardProvider = ({ children }) => {
     addToast("Draft saved to prompt revision history!", "success");
   };
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     if (e) e.preventDefault();
     if (!promptText.trim()) return;
-
-    const timeString = new Date().toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-
-    const userMsg = {
-      id: Date.now(),
-      sender: "user",
-      text: promptText,
-      time: timeString,
-    };
-
-    // Add user message to System Prompt tab
-    setMessages((prev) => ({
-      ...prev,
-      "system-prompt": [...prev["system-prompt"], userMsg],
-    }));
 
     const currentInput = promptText;
     setPromptText("");
@@ -326,115 +274,61 @@ export const DashboardProvider = ({ children }) => {
     setStatus("Syncing prompt updates...");
     setStatusColor("bg-amber-500 animate-pulse");
 
-    // Dynamic processing based on keywords
-    setTimeout(() => {
-      const now = new Date().toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
+    let targetConvId = activeConversationId;
+
+    try {
+      if (!targetConvId) {
+        // Create new conversation
+        const convRes = await apiFetch("/conversation", {
+          method: "POST",
+          body: JSON.stringify({
+            name: currentInput.substring(0, 30) + (currentInput.length > 30 ? "..." : ""),
+            type: "GLOBAL",
+            aiModel: activeModel,
+          }),
+        });
+
+        if (!convRes.success) throw new Error("Failed to create conversation");
+        
+        targetConvId = convRes.data.id;
+        setActiveConversationId(targetConvId);
+        queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      }
+
+      const optimisticMsg = {
+        id: Date.now().toString(),
+        role: "USER",
+        userQuery: currentInput,
+        createdAt: new Date().toISOString()
+      };
+      
+      queryClient.setQueryData(["messages", targetConvId], (oldData) => {
+        return {
+          ...oldData,
+          data: [...(oldData?.data || []), optimisticMsg]
+        };
       });
 
-      setLastSynced(now);
+      const formData = new FormData();
+      formData.append("conversationId", targetConvId);
+      formData.append("userQuery", currentInput);
+      formData.append("role", "USER");
+      
+      await apiFetch("/message", {
+        method: "POST",
+        body: formData,
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ["messages", targetConvId] });
       setStatus("System Ready");
       setStatusColor("bg-emerald-500");
-
-      const lowerInput = currentInput.toLowerCase();
-      let detectedBotStatus = botStatus;
-
-      // Detect state changes
-      if (lowerInput.includes("pause") || lowerInput.includes("stop")) {
-        detectedBotStatus = "Paused";
-        setBotStatus("Paused");
-      } else if (
-        lowerInput.includes("start") ||
-        lowerInput.includes("run") ||
-        lowerInput.includes("resume") ||
-        lowerInput.includes("active")
-      ) {
-        detectedBotStatus = "Active";
-        setBotStatus("Active");
-      }
-
-      // Generate split responses for each tab
-      const systemPromptReply = `System prompt instructions updated successfully via ${activeModel}!\n\nNew directive processed: "${currentInput}"\n\nThe updated behavior profile has been compiled and is now active across all sub-agent nodes.`;
-      
-      let fiverrReply = "";
-      if (detectedBotStatus === "Paused") {
-        fiverrReply = `[System Prompt Update] Fiverr Sales Bot has been successfully PAUSED. Auto-responder state is updated to Paused. Monitoring active.`;
-      } else if (detectedBotStatus === "Active" && botStatus === "Paused") {
-        fiverrReply = `[System Prompt Update] Fiverr Sales Bot has been RESUMED. Auto-responder state is updated to Active. Scan standing by.`;
-      } else {
-        fiverrReply = `[System Prompt Update] Auto-responder parameters adjusted to align with directive: "${currentInput}". Bot state is ${detectedBotStatus}.`;
-      }
-
-      let serviceReply = "";
-      if (lowerInput.includes("form") || lowerInput.includes("intake") || lowerInput.includes("require")) {
-        serviceReply = `[System Prompt Update] Intake Form sequence verified. Questionnaire dispatch interval set to immediate post-order trigger. Targets: Customer Profiles DB.`;
-      } else if (lowerInput.includes("welcome") || lowerInput.includes("greet")) {
-        serviceReply = `[System Prompt Update] Welcome Greeting rules updated. Contextual mapping of user inquiries aligned to portfolio templates.`;
-      } else {
-        serviceReply = `[System Prompt Update] Service standards updated. Milestones and onboarding check guidelines aligned to the directive: "${currentInput}".`;
-      }
-
-      let fallbackReply = "";
-      if (lowerInput.includes("fallback") || lowerInput.includes("failover") || lowerInput.includes("slack")) {
-        fallbackReply = `[System Prompt Update] Fallback Routing rules adjusted: Slack webhook failover activated. Webhook payload configured.`;
-      } else if (lowerInput.includes("route") || lowerInput.includes("redirect")) {
-        fallbackReply = `[System Prompt Update] Redirection rules checked. Standard domain escapes will map to operator lobby backup queue.`;
-      } else {
-        fallbackReply = `[System Prompt Update] Alternate routing and backup directives refreshed to support: "${currentInput}".`;
-      }
-
-      // Update message history across all tabs
-      setMessages((prev) => ({
-        "system-prompt": [
-          ...prev["system-prompt"],
-          {
-            id: Date.now() + 1,
-            sender: "ai",
-            text: systemPromptReply,
-            time: now,
-          },
-        ],
-        "fiverr-bot": [
-          ...prev["fiverr-bot"],
-          {
-            id: Date.now() + 2,
-            sender: "ai",
-            text: fiverrReply,
-            time: now,
-          },
-        ],
-        "service-guide": [
-          ...prev["service-guide"],
-          {
-            id: Date.now() + 3,
-            sender: "ai",
-            text: serviceReply,
-            time: now,
-          },
-        ],
-        "alternative-guide": [
-          ...prev["alternative-guide"],
-          {
-            id: Date.now() + 4,
-            sender: "ai",
-            text: fallbackReply,
-            time: now,
-          },
-        ],
-      }));
-
-      // Set other tabs as unread to trigger notification pulse badges
-      setUnreadTabs({
-        "fiverr-bot": activeTab !== "fiverr-bot",
-        "service-guide": activeTab !== "service-guide",
-        "alternative-guide": activeTab !== "alternative-guide",
-      });
-
+    } catch (err) {
+      addToast(err.message || "Failed to process message", "error");
+      setStatus("Error");
+      setStatusColor("bg-rose-500");
+    } finally {
       setIsTyping(false);
-      addToast("System prompt updated! All modules sync-notified.", "success");
-    }, 1800);
+    }
   };
 
   const handleQuickDeploy = () => {
@@ -506,6 +400,10 @@ export const DashboardProvider = ({ children }) => {
         attachFile,
         activeModel,
         setActiveModel,
+        activeConversationId,
+        setActiveConversationId,
+        conversationMessages,
+        isLoadingMessages,
       }}
     >
       {children}

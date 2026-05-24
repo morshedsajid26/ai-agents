@@ -300,7 +300,7 @@ export default function AgentTrainingView() {
   };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 relative animate-fade-in select-none">
+    <div className="flex flex-col flex-1 min-h-0 relative select-none">
 
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 select-none shrink-0 mb-4 animate-fade-in">
@@ -308,20 +308,12 @@ export default function AgentTrainingView() {
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0f172a] dark:text-slate-100">
             Agent Training
           </h1>
-          <p className="mt-1 text-xs sm:text-sm text-slate-550 dark:text-slate-400">
+          <p className="mt-1 text-sm sm:text-sm text-slate-550 dark:text-slate-400">
             Train your AI agent interactively. Add behavior guidelines, run test datasets, and optimize model responses.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400 dark:text-slate-550 font-semibold">
-            Tuning Engine:
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xxs font-bold rounded-full bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border border-indigo-250 dark:border-indigo-900/40">
-            <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
-            STANDBY FOR DIRECTIVES
-          </span>
-        </div>
+
       </div>
 
       {/* Main Workspace */}
@@ -345,7 +337,7 @@ export default function AgentTrainingView() {
                     : "bg-white dark:bg-[#0f172a] text-slate-700 dark:text-slate-200 border-slate-200/60 dark:border-slate-800/70 rounded-bl-none"
                     }`}
                 >
-                  <div className="flex justify-between items-center gap-4 mb-2 text-[10px] opacity-75 font-bold">
+                  <div className="flex justify-between items-center gap-4 mb-2 text-xs opacity-75 font-bold">
                     <span>{log.role === "user" ? "System Admin" : "Training Parser Engine"}</span>
                     <span>{log.time}</span>
                   </div>
@@ -371,7 +363,7 @@ export default function AgentTrainingView() {
                     </div>
                   )}
 
-                  <p className="text-xs leading-relaxed font-medium whitespace-pre-wrap">
+                  <p className="text-sm leading-relaxed font-medium whitespace-pre-wrap">
                     {log.text}
                   </p>
 
@@ -391,11 +383,11 @@ export default function AgentTrainingView() {
                 <div className="bg-white dark:bg-[#0f172a] text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-slate-800/70 rounded-2xl rounded-bl-none p-4 flex flex-col gap-3 min-w-[200px] shadow-sm">
                   <div className="flex items-center gap-2">
                     <div className="h-4 w-4 rounded-full border-2 border-indigo-250 animate-spin border-t-indigo-650" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                    <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
                       TRAINING IN PROGRESS
                     </span>
                   </div>
-                  <p className="text-xs font-mono font-medium animate-pulse text-slate-500">
+                  <p className="text-sm font-mono font-medium animate-pulse text-slate-500">
                     Optimizing weights using {activeModel}...
                   </p>
                 </div>
@@ -411,7 +403,7 @@ export default function AgentTrainingView() {
               {attachedFiles.map((file) => (
                 <div
                   key={file.id}
-                  className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold px-3 py-1.5 rounded-xl border border-indigo-150 dark:border-indigo-900/40 flex items-center gap-2 shadow-xxs hover:border-indigo-300 dark:hover:border-indigo-850 group transition-all duration-150 relative"
+                  className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-3 py-1.5 rounded-xl border border-indigo-150 dark:border-indigo-900/40 flex items-center gap-2 shadow-xxs hover:border-indigo-300 dark:hover:border-indigo-850 group transition-all duration-150 relative"
                 >
                   <FileIcon className="w-3.5 h-3.5 shrink-0" />
                   <div className="flex flex-col">
@@ -421,7 +413,7 @@ export default function AgentTrainingView() {
                   <button
                     type="button"
                     onClick={() => handleRemoveFile(file.id)}
-                    className="h-4 w-4 rounded-full flex items-center justify-center bg-indigo-200/50 hover:bg-indigo-200 dark:bg-indigo-900/40 dark:hover:bg-indigo-850 text-indigo-600 dark:text-indigo-400 cursor-pointer ml-1 text-[10px] font-bold"
+                    className="h-4 w-4 rounded-full flex items-center justify-center bg-indigo-200/50 hover:bg-indigo-200 dark:bg-indigo-900/40 dark:hover:bg-indigo-850 text-indigo-600 dark:text-indigo-400 cursor-pointer ml-1 text-xs font-bold"
                     title="Remove attachment"
                   >
                     ×
@@ -448,7 +440,7 @@ export default function AgentTrainingView() {
                       className="h-5 w-5 rounded-full bg-red-500/80 hover:bg-red-500 text-white flex items-center justify-center cursor-pointer transition-colors shadow-sm"
                       title="Remove Image"
                     >
-                      <span className="text-xs font-black leading-none">×</span>
+                      <span className="text-sm font-black leading-none">×</span>
                     </button>
                   </div>
                 </div>
@@ -511,7 +503,7 @@ export default function AgentTrainingView() {
 
                   {/* Attachment selection menu */}
                   {showAttachmentMenu && (
-                    <div className="absolute left-0 bottom-8 z-30 w-44 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-1.5 shadow-xl text-[10px] space-y-0.5 animate-scale-in">
+                    <div className="absolute left-0 bottom-8 z-30 w-44 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-1.5 shadow-xl text-xs space-y-0.5 animate-scale-in">
                       <button
                         type="button"
                         onClick={() => handleSelectAttachMode("file")}
@@ -570,7 +562,7 @@ export default function AgentTrainingView() {
                   </button>
 
                   {showModelMenu && (
-                    <div className="absolute left-0 bottom-8 z-30 w-36 bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 rounded-xl p-1.5 shadow-xl text-[10px] space-y-0.5 animate-scale-in">
+                    <div className="absolute left-0 bottom-8 z-30 w-36 bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 rounded-xl p-1.5 shadow-xl text-xs space-y-0.5 animate-scale-in">
                       {["GPT", "CLAUDE_HAIKU", "SONNET"].map((m) => (
                         <button
                           key={m}
@@ -631,16 +623,16 @@ export default function AgentTrainingView() {
                 Failed to load training details.
               </div>
             ) : (
-              <div className="flex-1 overflow-y-auto pr-1 space-y-4 text-xs sm:text-sm font-medium text-slate-655 dark:text-slate-400">
+              <div className="flex-1 overflow-y-auto pr-1 space-y-4 text-sm sm:text-sm font-medium text-slate-655 dark:text-slate-400">
                 <div className="grid grid-cols-2 gap-4 border-b border-slate-100 dark:border-slate-800/60 pb-3">
                   <div>
-                    <span className="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold">Model Engine</span>
+                    <span className="block text-xs text-slate-400 dark:text-slate-500 uppercase font-bold">Model Engine</span>
                     <span className="font-bold text-slate-900 dark:text-slate-100">
                       {modelLabels[trainingDetail.modelName] || trainingDetail.modelName}
                     </span>
                   </div>
                   <div>
-                    <span className="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold">Executed At</span>
+                    <span className="block text-xs text-slate-400 dark:text-slate-500 uppercase font-bold">Executed At</span>
                     <span className="font-semibold text-slate-900 dark:text-slate-200">
                       {new Date(trainingDetail.createdAt).toLocaleString()}
                     </span>
@@ -649,7 +641,7 @@ export default function AgentTrainingView() {
 
                 {trainingDetail.documentPath && (
                   <div className="border-b border-slate-100 dark:border-slate-800/60 pb-3">
-                    <span className="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold mb-1">Attached Dataset</span>
+                    <span className="block text-xs text-slate-400 dark:text-slate-500 uppercase font-bold mb-1">Attached Dataset</span>
                     <a
                       href={trainingDetail.documentUrl}
                       target="_blank"
@@ -663,8 +655,8 @@ export default function AgentTrainingView() {
                 )}
 
                 <div>
-                  <span className="block text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold mb-1">Prompt Weight Guidelines</span>
-                  <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-100 dark:border-slate-850 font-mono text-xxs sm:text-xs leading-relaxed whitespace-pre-wrap max-h-60 overflow-y-auto text-slate-700 dark:text-slate-300">
+                  <span className="block text-xs text-slate-400 dark:text-slate-500 uppercase font-bold mb-1">Prompt Weight Guidelines</span>
+                  <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-100 dark:border-slate-850 font-mono text-xxs sm:text-sm leading-relaxed whitespace-pre-wrap max-h-60 overflow-y-auto text-slate-700 dark:text-slate-300">
                     {trainingDetail.prompt}
                   </div>
                 </div>

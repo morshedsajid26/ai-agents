@@ -4,5 +4,5 @@ import React from "react";
 import UnifiedDashboard from "../components/UnifiedDashboard";
 
 export default function Page() {
-  return <UnifiedDashboard defaultTab="system-prompt" />;
+  return <UnifiedDashboard defaultTab="fiverr-bot" showTabs />;
 }

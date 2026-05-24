@@ -70,10 +70,10 @@ export default function Topbar({ activeTab, searchQuery, setSearchQuery, onMenuC
         return (
           <div className="flex items-center gap-3 pl-3 sm:pl-4 border-l border-slate-200/80 dark:border-slate-800 shrink-0">
             <div className="text-right hidden sm:block">
-              <p className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-none">
+              <p className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-none">
                 {profile.name}
               </p>
-              <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-0.5">
+              <p className="text-xs font-medium text-slate-400 dark:text-slate-500 mt-0.5">
                 Account Manager
               </p>
             </div>
@@ -135,7 +135,7 @@ export default function Topbar({ activeTab, searchQuery, setSearchQuery, onMenuC
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={getSearchPlaceholder()}
-            className="w-full bg-[#f1f5f9] dark:bg-[#161f30] text-slate-800 dark:text-slate-100 placeholder-slate-450 dark:placeholder-slate-500 text-xs sm:text-sm rounded-lg pl-9 pr-3 py-2 border border-transparent focus:border-blue-500/50 focus:bg-white dark:focus:bg-[#0f172a] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 outline-none transition-all duration-200"
+            className="w-full bg-[#f1f5f9] dark:bg-[#161f30] text-slate-800 dark:text-slate-100 placeholder-slate-450 dark:placeholder-slate-500 text-sm sm:text-sm rounded-lg pl-9 pr-3 py-2 border border-transparent focus:border-blue-500/50 focus:bg-white dark:focus:bg-[#0f172a] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 outline-none transition-all duration-200"
           />
         </div>
       </div>
@@ -174,7 +174,7 @@ export default function Topbar({ activeTab, searchQuery, setSearchQuery, onMenuC
             <Link
               href="/settings"
               onClick={() => setIsDropdownOpen(false)}
-              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:text-slate-350 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:text-slate-350 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
             >
               <Settings className="h-4 w-4 text-slate-400" />
               <span>Settings</span>
@@ -183,9 +183,18 @@ export default function Topbar({ activeTab, searchQuery, setSearchQuery, onMenuC
             <button
               onClick={() => {
                 setIsDropdownOpen(false);
+                
+                if (typeof window !== "undefined") {
+                  localStorage.clear();
+                  sessionStorage.clear();
+                  document.cookie.split(";").forEach((c) => {
+                    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+                  });
+                }
+                
                 router.push("/login");
               }}
-              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50/60 dark:text-rose-455 dark:hover:bg-rose-950/20 transition-colors cursor-pointer text-left"
+              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-bold text-rose-600 hover:bg-rose-50/60 dark:text-rose-455 dark:hover:bg-rose-950/20 transition-colors cursor-pointer text-left"
             >
               <LogOut className="h-4 w-4 text-rose-550" />
               <span>Logout</span>

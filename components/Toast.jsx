@@ -11,7 +11,7 @@ export function ToastProvider({ children }) {
         position="top-center"
         toastOptions={{
           // Apply class names dynamically supporting dark mode aesthetics
-          className: "!bg-white dark:!bg-[#0f172a] !text-slate-800 dark:!text-slate-100 !border !border-slate-200/80 dark:!border-slate-800/80 !rounded-xl !shadow-lg !font-sans !text-xs !font-semibold !px-4 !py-3",
+          className: "!bg-white dark:!bg-[#0f172a] !text-slate-800 dark:!text-slate-100 !border !border-slate-200/80 dark:!border-slate-800/80 !rounded-xl !shadow-lg !font-sans !text-sm !font-semibold !px-4 !py-3",
           duration: 3500,
           success: {
             iconTheme: {

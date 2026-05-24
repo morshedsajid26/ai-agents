@@ -90,7 +90,7 @@ export function Table({ TableHeads, TableRows, headClass, tableClass, children, 
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-850">
                 {headers.map((h, i) => (
-                  <th key={i} className={`text-center bg-slate-900 dark:bg-slate-955 font-semibold text-white py-4 px-4 text-xs uppercase tracking-wider ${headClass}`}>
+                  <th key={i} className={`text-center bg-slate-900 dark:bg-slate-955 font-semibold text-white py-4 px-4 text-sm uppercase tracking-wider ${headClass}`}>
                     {h}
                   </th>
                 ))}
@@ -115,7 +115,7 @@ export function Table({ TableHeads, TableRows, headClass, tableClass, children, 
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className={`text-center font-semibold text-white py-4 px-4 text-xs uppercase tracking-wider ${headClass} select-none`}
+                    className={`text-center font-semibold text-white py-4 px-4 text-sm uppercase tracking-wider ${headClass} select-none`}
                     style={{ width: header.column.columnDef.width || header.column.columnDef.size }}
                   >
                     <div 
