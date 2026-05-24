@@ -7,6 +7,66 @@ import { AlertTriangle, CheckCircle2 } from "lucide-react";
 export default function SystemPromptView({ agentFilter }) {
   const { messages, isTyping, activeConversationId, conversationMessages, isLoadingMessages } = useDashboard();
 
+  const formatMarkdown = (text) => {
+    if (!text) return null;
+    if (typeof text !== 'string') return text;
+    const cleanText = text.replace(/##/g, "");
+    const lines = cleanText.split('\n');
+    const result = [];
+    let inList = false;
+    let listItems = [];
+
+    const processBoldText = (str) => {
+      if (!str.includes('*')) return str;
+      const parts = str.split(/\*\*(.*?)\*\*/g);
+      return parts.map((part, i) => {
+        const cleanPart = part.replace(/\*/g, ""); // Remove any remaining single *
+        return i % 2 === 1 
+          ? <strong key={i} className="font-bold text-slate-900 dark:text-white">{cleanPart}</strong> 
+          : cleanPart;
+      });
+    };
+
+    lines.forEach((line, index) => {
+      const trimmedLine = line.trim();
+      const isListItemWithSpace = trimmedLine.startsWith('- ') || trimmedLine.startsWith('* ');
+      const isListItemWithoutSpace = trimmedLine.startsWith('-') || trimmedLine.startsWith('*');
+      
+      const isListItem = isListItemWithSpace || (isListItemWithoutSpace && trimmedLine.length > 1);
+
+      if (isListItem) {
+        if (!inList) inList = true;
+        const content = isListItemWithSpace ? trimmedLine.substring(2) : trimmedLine.substring(1);
+        listItems.push(
+          <li key={index} className="ml-5 list-disc pl-1 mb-1.5 marker:text-indigo-500 dark:marker:text-indigo-400">
+            {processBoldText(content.trim())}
+          </li>
+        );
+      } else {
+        if (inList) {
+          result.push(<ul key={`ul-${index}`} className="my-2">{listItems}</ul>);
+          inList = false;
+          listItems = [];
+        }
+        if (trimmedLine === '') {
+          result.push(<div key={`br-${index}`} className="h-2"></div>);
+        } else {
+          result.push(
+            <div key={`p-${index}`} className="mb-2">
+              {processBoldText(line)}
+            </div>
+          );
+        }
+      }
+    });
+
+    if (inList) {
+      result.push(<ul key="ul-end" className="my-2">{listItems}</ul>);
+    }
+
+    return result;
+  };
+
   const formatMessages = (msgs) => {
     const formatted = [];
     msgs.forEach((m) => {
@@ -88,9 +148,8 @@ export default function SystemPromptView({ agentFilter }) {
                 : "bg-white dark:bg-[#0f172a] text-slate-700 dark:text-slate-200 border-slate-200/60 dark:border-slate-800/70 rounded-bl-none"
             }`}
           >
-            <div className="flex justify-between items-center gap-4 mb-2 text-sm opacity-75 font-bold uppercase tracking-wider">
-              <span>{msg.sender === "user" ? "You" : "Prompt Architect AI"}</span>
-              <span>{msg.time}</span>
+            <div className="mb-2 text-sm opacity-75 font-bold uppercase tracking-wider">
+              {msg.sender === "user" ? "You" : "Prompt Architect AI"}
             </div>
             
             {msg.sender === "ai" && msg.structuredData ? (
@@ -121,8 +180,8 @@ export default function SystemPromptView({ agentFilter }) {
                               <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                               {sec.title}
                             </h4>
-                            <div className="text-base leading-relaxed text-slate-600 dark:text-slate-300 whitespace-pre-line">
-                              {sec.content.replace(/##/g, "").trim()}
+                            <div className="text-base leading-relaxed text-slate-600 dark:text-slate-300">
+                              {formatMarkdown(sec.content)}
                             </div>
                           </div>
                         ))}
@@ -137,23 +196,27 @@ export default function SystemPromptView({ agentFilter }) {
                           <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                           {sec.title}
                         </h4>
-                        <div className="text-base leading-relaxed text-slate-600 dark:text-slate-300 whitespace-pre-line">
-                          {sec.content.replace(/##/g, "").trim()}
+                        <div className="text-base leading-relaxed text-slate-600 dark:text-slate-300">
+                          {formatMarkdown(sec.content)}
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-base leading-relaxed whitespace-pre-line font-medium">
-                    {msg.text}
-                  </p>
+                  <div className="text-base leading-relaxed font-medium">
+                    {formatMarkdown(msg.text)}
+                  </div>
                 )}
               </div>
             ) : (
-              <p className="text-base leading-relaxed whitespace-pre-line font-medium">
-                {msg.text}
-              </p>
+              <div className="text-base leading-relaxed font-medium">
+                {formatMarkdown(msg.text)}
+              </div>
             )}
+
+            <div className={`mt-2 text-[11px] opacity-60 font-bold uppercase tracking-wider ${msg.sender === "user" ? "text-right" : "text-left"}`}>
+              {msg.time}
+            </div>
           </div>
         </div>
       ))}

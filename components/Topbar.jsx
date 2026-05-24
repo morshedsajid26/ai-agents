@@ -47,60 +47,22 @@ export default function Topbar({ activeTab, searchQuery, setSearchQuery, onMenuC
     }
   };
 
-  // Render profile section matching the screenshots dynamically
+  // Render profile section dynamically
   const renderProfileSection = () => {
     const avatarUrl = profile.avatarUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120&h=120";
 
-    switch (activeTab) {
-      case "dashboard":
-        return (
-          <div className="flex items-center gap-3 pl-3 sm:pl-4 border-l border-slate-200/80 dark:border-slate-800 shrink-0">
-            <img
-              src={avatarUrl}
-              alt={profile.name}
-              className="w-8 h-8 rounded-full object-cover border border-slate-100 dark:border-slate-800"
-            />
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 hidden sm:inline">
-              {profile.name}
-            </span>
-          </div>
-        );
-
-      case "fiverr-bot":
-        return (
-          <div className="flex items-center gap-3 pl-3 sm:pl-4 border-l border-slate-200/80 dark:border-slate-800 shrink-0">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-none">
-                {profile.name}
-              </p>
-              <p className="text-xs font-medium text-slate-400 dark:text-slate-500 mt-0.5">
-                Account Manager
-              </p>
-            </div>
-            <img
-              src={avatarUrl}
-              alt={profile.name}
-              className="w-8 h-8 rounded-full object-cover border border-slate-100 dark:border-slate-800"
-            />
-          </div>
-        );
-
-      case "service-guide":
-      case "system-prompt":
-      default:
-        return (
-          <div className="flex items-center gap-3 shrink-0">
-            <img
-              src={avatarUrl}
-              alt="User profile"
-              className="w-8 h-8 rounded-full object-cover border border-slate-100 dark:border-slate-850 shadow-xs"
-            />
-            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 hidden sm:inline">
-              {profile.name}
-            </span>
-          </div>
-        );
-    }
+    return (
+      <div className="flex items-center gap-3 shrink-0">
+        <img
+          src={avatarUrl}
+          alt={profile.name || "User profile"}
+          className="w-8 h-8 rounded-full object-cover border border-slate-100 dark:border-slate-850 shadow-xs"
+        />
+        <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 hidden sm:inline">
+          {profile.name}
+        </span>
+      </div>
+    );
   };
 
   return (

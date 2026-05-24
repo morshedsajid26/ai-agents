@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { User, Save, X, Sparkles, Pencil, Camera } from "lucide-react";
+import { User, Save, X, Sparkles, Pencil, Camera, Key } from "lucide-react";
 import toast from "react-hot-toast";
 import InputField from "../../components/InputField";
+import Password from "../../components/Password";
 import { useDashboard } from "../../components/DashboardContext";
 import { apiFetch } from "../../utils/api";
 
@@ -18,6 +19,8 @@ export default function SettingsPage() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [avatarFile, setAvatarFile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
 
   const fileInputRef = useRef(null);
 
@@ -77,18 +80,26 @@ export default function SettingsPage() {
     onSuccess: (data) => {
       setProfile(data);
       setAvatarFile(null);
-      toast.success("Profile updated successfully!");
-      setIsEditing(false);
-    },
-    onError: (error) => {
-      console.error("API update failed:", error);
-      toast.error(error.message || "Failed to update profile. Please try again.");
     },
   });
 
-  const isSaving = updateProfileMutation.isPending;
+  const changePasswordMutation = useMutation({
+    mutationFn: async (passwordData) => {
+      const json = await apiFetch("/auth/change-password", {
+        method: "POST",
+        body: JSON.stringify(passwordData),
+      });
+      return json.data;
+    },
+    onSuccess: () => {
+      setOldPassword("");
+      setNewPassword("");
+    },
+  });
 
-  const handleSave = (e) => {
+  const isSaving = updateProfileMutation.isPending || changePasswordMutation.isPending;
+
+  const handleSave = async (e) => {
     e.preventDefault();
     if (!name || !email) {
       toast.error("Name and Email are required");
@@ -104,7 +115,42 @@ export default function SettingsPage() {
       updatedData.avatarUrl = avatarUrl;
     }
 
-    updateProfileMutation.mutate(updatedData);
+    const hasProfileChanges = name !== profile?.name || email !== profile?.email || !!avatarFile;
+    const hasPasswordChanges = oldPassword || newPassword;
+
+    if (!hasProfileChanges && !hasPasswordChanges) {
+      toast.error("No changes to save");
+      setIsEditing(false);
+      return;
+    }
+
+    if (hasPasswordChanges && (!oldPassword || !newPassword)) {
+      toast.error("Both Current and New Passwords are required to change password");
+      return;
+    }
+
+    try {
+      let profileMsg = "";
+      let passMsg = "";
+
+      if (hasProfileChanges) {
+        await updateProfileMutation.mutateAsync(updatedData);
+        profileMsg = "Profile";
+      }
+
+      if (hasPasswordChanges) {
+        await changePasswordMutation.mutateAsync({ oldPassword, newPassword });
+        passMsg = "Password";
+      }
+
+      const msg = [profileMsg, passMsg].filter(Boolean).join(" & ");
+      toast.success(`${msg} updated successfully!`);
+      
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Save failed:", error);
+      toast.error(error.message || "Failed to save changes. Please try again.");
+    }
   };
 
   const handleDiscard = () => {
@@ -113,9 +159,13 @@ export default function SettingsPage() {
       setEmail(profile.email || "");
       setAvatarUrl(profile.avatarUrl || "");
     }
+    setOldPassword("");
+    setNewPassword("");
     setIsEditing(false);
     toast.error("Changes discarded");
   };
+
+
 
   const defaultAvatar = "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120&h=120";
 
@@ -204,6 +254,7 @@ export default function SettingsPage() {
                   readonly={!isEditing}
                 />
                 <InputField
+                disabled
                   label="Email Address"
                   type="email"
                   value={email}
@@ -212,6 +263,25 @@ export default function SettingsPage() {
                   required
                   readonly={!isEditing}
                 />
+ 
+                  <div className="space-y-6 grid grid-cols-2 gap-6">
+                    <Password
+                      label="Current Password"
+                      placeholder="Enter current password"
+                      value={oldPassword}
+                      onChange={(e) => setOldPassword(e.target.value)}
+                      name="oldPassword"
+                      readonly={!isEditing}
+                    />
+                    <Password
+                      label="New Password"
+                      placeholder="Enter new password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      name="newPassword"
+                      readonly={!isEditing}
+                    />
+                </div>
               </div>
             </div>
 

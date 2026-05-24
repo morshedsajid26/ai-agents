@@ -123,9 +123,9 @@ export const DashboardProvider = ({ children }) => {
       const validDashboardTabs = ["system-prompt", "fiverr-bot", "service-guide", "alternative-guide"];
       setActiveTab((current) => {
         if (!validDashboardTabs.includes(current)) {
-          return "fiverr-bot";
+          return "system-prompt";
         }
-        return current === "system-prompt" ? "fiverr-bot" : current;
+        return current === "fiverr-bot" && pathname === "/" ? "system-prompt" : current;
       });
     }
   }, [pathname]);
@@ -264,6 +264,14 @@ export const DashboardProvider = ({ children }) => {
     addToast("Draft saved to prompt revision history!", "success");
   };
 
+  // Use pathname to determine conversation type instead of active tab
+  const getConvTypeFromPath = (path) => {
+    if (path === "/fiverr-bot") return "SALES_BOT";
+    if (path === "/service-guide") return "SERVICE_GUIDE";
+    if (path === "/alternative-guide") return "ALTERNATIVE_GUIDE";
+    return "GLOBAL";
+  };
+
   const handleSendMessage = async (e) => {
     if (e) e.preventDefault();
     if (!promptText.trim()) return;
@@ -278,11 +286,7 @@ export const DashboardProvider = ({ children }) => {
     let targetConvId = activeConversationId;
     
     // Determine conversation type based on active tab
-    let convType = "GLOBAL";
-    if (activeTab === "system-prompt") convType = "GLOBAL";
-    else if (activeTab === "fiverr-bot") convType = "SALES_BOT";
-    else if (activeTab === "service-guide") convType = "SERVICE_GUIDE";
-    else if (activeTab === "alternative-guide") convType = "ALTERNATIVE_GUIDE";
+    const convType = getConvTypeFromPath(pathname);
 
     try {
       if (!targetConvId) {
@@ -331,11 +335,6 @@ export const DashboardProvider = ({ children }) => {
       queryClient.invalidateQueries({ queryKey: ["messages", targetConvId] });
       setStatus("System Ready");
       setStatusColor("bg-emerald-500");
-
-      if (convType === "GLOBAL") {
-        setActiveTab("fiverr-bot");
-        router.push("/fiverr-bot");
-      }
     } catch (err) {
       addToast(err.message || "Failed to process message", "error");
       setStatus("Error");

@@ -141,7 +141,12 @@ export default function UnifiedDashboard({ defaultTab, showTabs = false }) {
 
   // Dynamic headers tailored to each tab
   const renderHeader = () => {
-    const info = getHeaderInfo();
+    // If showTabs is true, we force the Global Chat header info regardless of activeTab
+    const info = showTabs ? {
+      title: "Global Chat",
+      description: "Chat with the Global Chat agent to modify behavior or verify lead status."
+    } : getHeaderInfo();
+    
     if (!info) return null;
 
     return (
