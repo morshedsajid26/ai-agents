@@ -66,7 +66,7 @@ export default function Topbar({ activeTab, searchQuery, setSearchQuery, onMenuC
   };
 
   return (
-    <header className="h-[76px] bg-white dark:bg-[#0b0f19] border-b border-slate-200/70 dark:border-slate-800/80 flex items-center justify-between px-4 sm:px-8 select-none shrink-0 transition-colors duration-300 gap-4">
+    <header className="h-[50px] bg-white dark:bg-[#0b0f19] border-b border-slate-200/70 dark:border-slate-800/80 flex items-center justify-between px-4 sm:px-8 select-none shrink-0 transition-colors duration-300 gap-4">
       
       {/* Left section: Hamburger (mobile) + Search bar */}
       <div className="flex items-center gap-3.5 flex-1 max-w-md">
@@ -87,19 +87,6 @@ export default function Topbar({ activeTab, searchQuery, setSearchQuery, onMenuC
           </svg>
         </button>
 
-        {/* Search Input Bar */}
-        <div className="relative w-full">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
-            <SearchIcon className="w-4.5 h-4.5" />
-          </div>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={getSearchPlaceholder()}
-            className="w-full bg-[#f1f5f9] dark:bg-[#161f30] text-slate-800 dark:text-slate-100 placeholder-slate-450 dark:placeholder-slate-500 text-sm sm:text-sm rounded-lg pl-9 pr-3 py-2 border border-transparent focus:border-blue-500/50 focus:bg-white dark:focus:bg-[#0f172a] focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 outline-none transition-all duration-200"
-          />
-        </div>
       </div>
 
       {/* Action Icons and Profile */}
