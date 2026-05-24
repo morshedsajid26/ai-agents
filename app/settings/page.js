@@ -16,6 +16,7 @@ export default function SettingsPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarFile, setAvatarFile] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
   const fileInputRef = useRef(null);
@@ -30,6 +31,7 @@ export default function SettingsPage() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatarUrl(reader.result);
+        setAvatarFile(file);
         toast.success("Avatar updated locally! Save changes to apply.");
       };
       reader.readAsDataURL(file);
@@ -42,19 +44,39 @@ export default function SettingsPage() {
       setName(profile.name || "");
       setEmail(profile.email || "");
       setAvatarUrl(profile.avatarUrl || "");
+      setAvatarFile(null);
     }
   }, [profile]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (updatedData) => {
+      // If there is a new avatar file, upload it first
+      if (avatarFile) {
+        const formData = new FormData();
+        formData.append("avatar", avatarFile);
+        
+        try {
+          await apiFetch("/user/upload-avatar", {
+            method: "PATCH",
+            body: formData,
+          });
+          console.log("Successfully uploaded avatar");
+        } catch (error) {
+          console.error("Avatar upload failed:", error.message);
+          throw new Error("Failed to upload avatar");
+        }
+      }
+
+      // Then update the rest of the profile
       const json = await apiFetch("/user/update-profile", {
-        method: "PUT",
+        method: "PATCH",
         body: JSON.stringify(updatedData),
       });
       return json.data;
     },
     onSuccess: (data) => {
       setProfile(data);
+      setAvatarFile(null);
       toast.success("Profile updated successfully!");
       setIsEditing(false);
     },
@@ -76,8 +98,11 @@ export default function SettingsPage() {
     const updatedData = {
       name,
       email,
-      avatarUrl: avatarUrl || null,
     };
+
+    if (!avatarFile && avatarUrl) {
+      updatedData.avatarUrl = avatarUrl;
+    }
 
     updateProfileMutation.mutate(updatedData);
   };
