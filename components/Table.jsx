@@ -55,6 +55,7 @@ export function Table({ TableHeads, TableRows, headClass, tableClass, children, 
         size: typeof head.width === 'number' ? head.width : 150,
         width: head.width,
         enableSorting: head.sortable !== false,
+        meta: { align: head.align || "center" },
       })),
     [TableHeads]
   );
@@ -112,34 +113,37 @@ export function Table({ TableHeads, TableRows, headClass, tableClass, children, 
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id} className="border-b border-slate-200 dark:border-slate-800 bg-slate-900 dark:bg-slate-955">
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className={`text-center font-semibold text-white py-4 px-4 text-sm uppercase tracking-wider ${headClass} select-none`}
-                    style={{ width: header.column.columnDef.width || header.column.columnDef.size }}
-                  >
-                    <div 
-                      className="flex items-center justify-center gap-2 cursor-pointer hover:text-indigo-200 transition-colors"
-                      onClick={header.column.getToggleSortingHandler()}
+                {headerGroup.headers.map((header) => {
+                  const align = header.column.columnDef.meta?.align || "center";
+                  return (
+                    <th
+                      key={header.id}
+                      className={`font-semibold text-white py-4 px-4 text-sm uppercase tracking-wider ${headClass} select-none ${align === "left" ? "text-left" : align === "right" ? "text-right" : "text-center"}`}
+                      style={{ width: header.column.columnDef.width || header.column.columnDef.size }}
                     >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                      
-                      {header.column.getCanSort() && (
-                        <span className="text-slate-400">
-                          {{
-                            asc: <ArrowUp size={14} className="text-indigo-400" />,
-                            desc: <ArrowDown size={14} className="text-indigo-400" />,
-                          }[header.column.getIsSorted()] ?? <ArrowUpDown size={14} />}
-                        </span>
-                      )}
-                    </div>
-                  </th>
-                ))}
+                      <div 
+                        className={`flex items-center gap-2 cursor-pointer hover:text-indigo-200 transition-colors ${align === "left" ? "justify-start pl-12" : align === "right" ? "justify-end" : "justify-center"}`}
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                        
+                        {header.column.getCanSort() && (
+                          <span className="text-slate-400">
+                            {{
+                              asc: <ArrowUp size={14} className="text-indigo-400" />,
+                              desc: <ArrowDown size={14} className="text-indigo-400" />,
+                            }[header.column.getIsSorted()] ?? <ArrowUpDown size={14} />}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                  );
+                })}
               </tr>
             ))}
           </thead>
@@ -148,14 +152,17 @@ export function Table({ TableHeads, TableRows, headClass, tableClass, children, 
           <tbody className="divide-y divide-slate-100 dark:divide-slate-850">
             {table.getRowModel().rows.map((row) => (
               <tr key={row.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/20 transition-all group">
-                {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className="py-4 text-center px-4 text-sm font-normal text-slate-650 dark:text-slate-400 group-hover:text-indigo-650 dark:group-hover:text-indigo-400 transition-colors"
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
+                {row.getVisibleCells().map((cell) => {
+                  const align = cell.column.columnDef.meta?.align || "center";
+                  return (
+                    <td
+                      key={cell.id}
+                      className={`py-4 px-4 text-sm font-normal text-slate-650 dark:text-slate-400 group-hover:text-indigo-650 dark:group-hover:text-indigo-400 transition-colors ${align === "left" ? "text-left" : align === "right" ? "text-right" : "text-center"}`}
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>

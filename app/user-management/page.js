@@ -182,12 +182,13 @@ export default function UserManagementPage() {
     {
       key: "name",
       Title: "User",
+      align: "left",
       render: (user) => (
-        <div className="flex items-center gap-3 justify-center">
-          <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-655 dark:text-slate-400 font-bold uppercase">
+        <div className="flex items-center gap-3 justify-start pl-2 sm:pl-4">
+          <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/50 flex items-center justify-center text-slate-700 dark:text-slate-300 font-bold uppercase shadow-sm shrink-0">
             {user.name ? user.name[0] : <User className="w-4 h-4" />}
           </div>
-          <span className="font-semibold text-slate-900 dark:text-white">{user.name}</span>
+          <span className="font-semibold text-sm text-slate-800 dark:text-slate-100">{user.name}</span>
         </div>
       )
     },
