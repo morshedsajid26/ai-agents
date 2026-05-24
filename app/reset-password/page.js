@@ -9,9 +9,26 @@ import toast from "react-hot-toast";
 import Password from "../../components/Password";
 import { useDashboard } from "../../components/DashboardContext";
 
+import { apiFetch } from "../../utils/api";
+import { useEffect } from "react";
+// Removed useSearchParams and Suspense since we don't need query params anymore
+
 export default function ResetPasswordPage() {
   const router = useRouter();
   const { theme, toggleTheme } = useDashboard();
+  
+  const [email, setEmail] = useState("");
+  const [token, setToken] = useState("");
+  
+  useEffect(() => {
+    // Read from sessionStorage securely on client side mount
+    const storedEmail = sessionStorage.getItem("resetEmail");
+    const storedToken = sessionStorage.getItem("resetToken");
+    
+    if (storedEmail) setEmail(storedEmail);
+    if (storedToken) setToken(storedToken);
+  }, []);
+  
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -35,12 +52,29 @@ export default function ResetPasswordPage() {
     }
 
     setIsLoading(true);
-    // Simulate API request to reset password
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
+    try {
+      await apiFetch("/auth/reset-password", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          newPassword: password 
+        }),
+      });
 
-    toast.success("Password reset successfully! Please sign in.");
-    router.push("/login");
+      // Clear the tokens from sessionStorage upon successful reset
+      sessionStorage.removeItem("resetToken");
+      sessionStorage.removeItem("resetEmail");
+
+      toast.success("Password reset successfully! Please sign in.");
+      router.push("/login");
+    } catch (error) {
+      console.error("Reset password failed:", error);
+      toast.error(error.message || "Failed to reset password. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

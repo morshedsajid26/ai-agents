@@ -1,15 +1,25 @@
 import React, { useRef, useState, useEffect } from "react";
-// eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
 import { ShieldCheck, ArrowLeft, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
-const OTPInput = ({ length = 6, onComplete }) => {
+const OTPInput = ({ 
+  length = 6, 
+  onComplete, 
+  onResend, 
+  email, 
+  isVerifying: externalIsVerifying = false,
+  isResending: externalIsResending = false,
+  fullPage = true 
+}) => {
   const [otp, setOtp] = useState(new Array(length).fill(""));
-  const [isVerifying, setIsVerifying] = useState(false);
+  const [internalIsVerifying, setInternalIsVerifying] = useState(false);
   const inputRefs = useRef([]);
   const router = useRouter();
+
+  const isVerifying = externalIsVerifying || internalIsVerifying;
+  const isResending = externalIsResending;
 
   // Auto focus first input on mount
   useEffect(() => {
@@ -37,23 +47,23 @@ const OTPInput = ({ length = 6, onComplete }) => {
       if (onComplete) {
         onComplete(combinedOtp);
       } else {
-        // Fallback behavior if used as a standalone page route
-        handleAutoVerify(combinedOtp);
+        // Fallback behavior
+        handleAutoVerifyFallback(combinedOtp);
       }
     }
   };
 
-  const handleAutoVerify = async (val) => {
-    setIsVerifying(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsVerifying(false);
+  const handleAutoVerifyFallback = async (val) => {
+    setInternalIsVerifying(true);
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    setInternalIsVerifying(false);
     if (val === "123456") {
       toast.success("OTP Verified Successfully!");
       router.push("/reset-password");
     } else {
       toast.error("Invalid OTP. Try 123456");
       setOtp(new Array(length).fill(""));
-      inputRefs.current[0].focus();
+      inputRefs.current[0]?.focus();
     }
   };
 
@@ -77,16 +87,13 @@ const OTPInput = ({ length = 6, onComplete }) => {
     
     // Focus last filled or next empty
     const nextIndex = Math.min(pasteData.length, length - 1);
-    inputRefs.current[nextIndex].focus();
+    inputRefs.current[nextIndex]?.focus();
 
     if (pasteData.length === length) {
       if (onComplete) onComplete(data.slice(0, length));
-      else handleAutoVerify(data.slice(0, length));
+      else handleAutoVerifyFallback(data.slice(0, length));
     }
   };
-
-  // If onComplete is NOT provided, we assume it's being used as a full page
-  const isPage = !onComplete;
 
   const content = (
     <div className="flex flex-col items-center">
@@ -107,7 +114,7 @@ const OTPInput = ({ length = 6, onComplete }) => {
             onKeyDown={(e) => handleKeyDown(e, index)}
             className={`w-11 h-14 sm:w-14 sm:h-16 text-center text-2xl font-bold border-2 rounded-2xl bg-white dark:bg-slate-900/60 transition-all outline-none 
               ${digit ? 'border-indigo-600 dark:border-indigo-500 shadow-[0_0_15px_rgba(79,70,229,0.1)]' : 'border-slate-200 dark:border-slate-800'} 
-              focus:border-indigo-600 dark:focus:border-indigo-500 focus:ring-4 focus:ring-indigo-650/10 dark:focus:ring-indigo-500/10 text-slate-900 dark:text-slate-100`}
+             `}
           />
         ))}
       </div>
@@ -124,7 +131,7 @@ const OTPInput = ({ length = 6, onComplete }) => {
     </div>
   );
 
-  if (isPage) {
+  if (fullPage) {
     return (
       <div className="p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="mb-10 text-center">
@@ -132,8 +139,9 @@ const OTPInput = ({ length = 6, onComplete }) => {
             <ShieldCheck className="text-indigo-600 dark:text-indigo-400 w-10 h-10" />
           </div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Verify Code</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 max-w-[280px] mx-auto leading-relaxed">
-            Please enter the 6-digit verification code sent to your device.
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-3 max-w-[320px] mx-auto leading-relaxed">
+            Please enter the 6-digit verification code sent to<br/>
+            <span className="font-bold text-slate-700 dark:text-slate-200">{email || "your email address"}</span>
           </p>
         </div>
 
@@ -142,7 +150,13 @@ const OTPInput = ({ length = 6, onComplete }) => {
         <div className="mt-10 space-y-4">
           <p className="text-center text-sm text-slate-550 dark:text-slate-400 font-medium">
             Didn't receive the code?{" "}
-            <button className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline cursor-pointer">Resend OTP</button>
+            <button 
+              onClick={onResend} 
+              disabled={isResending}
+              className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline cursor-pointer disabled:opacity-50"
+            >
+              {isResending ? "Sending..." : "Resend OTP"}
+            </button>
           </p>
           <button 
             onClick={() => router.back()}

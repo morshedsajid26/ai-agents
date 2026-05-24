@@ -9,6 +9,8 @@ import toast from "react-hot-toast";
 import InputField from "../../components/InputField";
 import { useDashboard } from "../../components/DashboardContext";
 
+import { apiFetch } from "../../utils/api";
+
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const { theme, toggleTheme } = useDashboard();
@@ -23,13 +25,22 @@ export default function ForgotPasswordPage() {
     }
 
     setIsLoading(true);
-    // Simulate API request to send reset code
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
-
-    toast.success("Verification code sent to your email!");
-    // Push to verification step
-    router.push("/verify-otp");
+    try {
+      await apiFetch("/auth/forgot-password", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+      
+      toast.success("Verification code sent to your email!");
+      // We can pass the email to verify-otp using query string or sessionStorage
+      // Using query string is easiest for next/navigation
+      router.push(`/verify-otp?email=${encodeURIComponent(email)}`);
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      toast.error(error.message || "Failed to send verification code. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
