@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Cookies from "js-cookie";
 import { useToast } from "./Toast";
@@ -14,6 +14,7 @@ export const useDashboard = () => useContext(DashboardContext);
 export const DashboardProvider = ({ children }) => {
   const { addToast } = useToast();
   const pathname = usePathname();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("system-prompt");
   const [theme, setTheme] = useState("light");
   const queryClient = useQueryClient();
@@ -275,15 +276,23 @@ export const DashboardProvider = ({ children }) => {
     setStatusColor("bg-amber-500 animate-pulse");
 
     let targetConvId = activeConversationId;
+    
+    // Determine conversation type based on active tab
+    let convType = "GLOBAL";
+    if (activeTab === "system-prompt") convType = "GLOBAL";
+    else if (activeTab === "fiverr-bot") convType = "SALES_BOT";
+    else if (activeTab === "service-guide") convType = "SERVICE_GUIDE";
+    else if (activeTab === "alternative-guide") convType = "ALTERNATIVE_GUIDE";
 
     try {
       if (!targetConvId) {
+
         // Create new conversation
         const convRes = await apiFetch("/conversation", {
           method: "POST",
           body: JSON.stringify({
             name: currentInput.substring(0, 30) + (currentInput.length > 30 ? "..." : ""),
-            type: "GLOBAL",
+            type: convType,
             aiModel: activeModel,
           }),
         });
@@ -322,6 +331,11 @@ export const DashboardProvider = ({ children }) => {
       queryClient.invalidateQueries({ queryKey: ["messages", targetConvId] });
       setStatus("System Ready");
       setStatusColor("bg-emerald-500");
+
+      if (convType === "GLOBAL") {
+        setActiveTab("fiverr-bot");
+        router.push("/fiverr-bot");
+      }
     } catch (err) {
       addToast(err.message || "Failed to process message", "error");
       setStatus("Error");

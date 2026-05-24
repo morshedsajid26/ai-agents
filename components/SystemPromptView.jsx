@@ -107,13 +107,29 @@ export default function SystemPromptView({ agentFilter }) {
                   </div>
                 )}
                 
-                {/* If it's the main tab showing a full_analysis, show a summary message */}
-                {msg.isFullAnalysis ? (
-                  <div className="bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 p-4 rounded-xl text-sm font-medium border border-indigo-100 dark:border-indigo-800/30">
-                    <p>Analysis complete. The response has been divided into sections based on intent.</p>
-                    <p className="mt-2 text-sm opacity-80">Please click the <strong>Fiverr Sales Bot</strong>, <strong>Service Guide</strong>, or <strong>Alternative Guide</strong> tabs above to view the detailed responses.</p>
+                {/* If it's the main tab showing a full_analysis, render all agents' sections */}
+                {msg.isFullAnalysis && msg.structuredData?.agents ? (
+                  <div className="space-y-6 mt-4">
+                    {msg.structuredData.agents.map((agentObj, aIdx) => (
+                      <div key={aIdx} className="space-y-3">
+                        <h3 className="font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest text-xs border-b border-indigo-100 dark:border-indigo-500/20 pb-2 mb-3">
+                          {agentObj.agent_name.replace(/_/g, " ")}
+                        </h3>
+                        {agentObj.sections?.map((sec, i) => (
+                          <div key={i} className="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3 border border-slate-100 dark:border-slate-700/50">
+                            <h4 className="font-bold text-slate-800 dark:text-slate-100 text-base mb-1.5 uppercase tracking-wide flex items-center gap-2">
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                              {sec.title}
+                            </h4>
+                            <div className="text-base leading-relaxed text-slate-600 dark:text-slate-300 whitespace-pre-line">
+                              {sec.content.replace(/##/g, "").trim()}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
                   </div>
-                ) : msg.structuredData.sections?.length > 0 ? (
+                ) : msg.structuredData?.sections?.length > 0 ? (
                   <div className="space-y-3">
                     {msg.structuredData.sections.map((sec, i) => (
                       <div key={i} className="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3 border border-slate-100 dark:border-slate-700/50">

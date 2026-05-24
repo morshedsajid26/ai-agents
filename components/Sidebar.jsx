@@ -128,7 +128,7 @@ export default function Sidebar({
   const updateMutation = useMutation({
     mutationFn: async ({ id, name }) => {
       return apiFetch(`/conversation/${id}`, {
-        method: "PUT",
+        method: "PATCH",
         body: JSON.stringify({ name }),
       });
     },
@@ -208,7 +208,7 @@ export default function Sidebar({
               } ${
                 isActive
                   ? "bg-[#eef2ff] text-[#3b82f6] dark:bg-[#1e293b] dark:text-[#3b82f6]"
-                  : "text-slate-650 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-205"
+                  : "text-slate-650 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60  dark:hover:text-slate-205"
               }`}
             >
               {isActive && isOpen && (
@@ -228,17 +228,20 @@ export default function Sidebar({
       {/* Recents list styled like ChatGPT */}
       {isOpen && (
         <div className="mx-3 mb-6 pt-5 border-t border-slate-100 dark:border-slate-800/80 flex-1 flex flex-col min-h-0 overflow-hidden select-none animate-fade-in">
+          <div className="mb-4 px-1">
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
+            >
+              <Edit2 className="w-4 h-4" />
+              <span>New chat</span>
+            </button>
+          </div>
+
           <div className="mb-3 px-3 flex items-center justify-between text-slate-400 dark:text-slate-500 shrink-0">
             <span className="text-xs font-black uppercase tracking-wider">
               Recents
             </span>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300 transition-colors"
-              title="New Chat"
-            >
-              <Plus className="w-3.5 h-3.5" />
-            </button>
           </div>
           <div className="flex-1 overflow-y-auto px-1 space-y-1 scrollbar-thin">
             {isLoading ? (
@@ -303,7 +306,7 @@ export default function Sidebar({
                             
                             // If it's a GLOBAL chat going to the main page, make sure the global chat tab is active
                             if (targetRoute === "/") {
-                              setActiveTab("fiverr-bot");
+                              setActiveTab("system-prompt");
                             }
                             
                             if (pathname !== targetRoute) {
