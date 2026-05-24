@@ -62,3 +62,7 @@ body {
 .border-l-3 {
   border-left-width: 3px;
 }
+
+button{
+  cursor: pointer;
+}
