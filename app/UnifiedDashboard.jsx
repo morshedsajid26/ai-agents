@@ -93,9 +93,6 @@ export default function UnifiedDashboard({ defaultTab }) {
 
   const tabsList = [
     { id: "system-prompt", label: "System Prompt", icon: PromptIcon },
-    { id: "fiverr-bot", label: "Fiverr Sales Bot", icon: BotIcon },
-    { id: "service-guide", label: "Service Guide", icon: GuideIcon },
-    { id: "alternative-guide", label: "Alternative Guide", icon: AlternateIcon },
   ];
 
   // Dynamic headers tailored to each tab
@@ -106,21 +103,7 @@ export default function UnifiedDashboard({ defaultTab }) {
           title: "System Prompt",
           description: "Define the core behavior and intelligence guidelines of your sales assistant.",
         };
-      case "fiverr-bot":
-        return {
-          title: "Fiverr Sales Bot",
-          description: "Chat with the auto-responder agent to modify behavior or verify lead status.",
-        };
-      case "service-guide":
-        return {
-          title: "Service Guide",
-          description: "Review and adjust onboarding sequences, dispatch check rules, and execution standards.",
-        };
-      case "alternative-guide":
-        return {
-          title: "Alternative Guide",
-          description: "Review secondary protocols, backup drafts, and automated edge-case configurations.",
-        };
+
       default:
         return null;
     }
@@ -284,21 +267,11 @@ export default function UnifiedDashboard({ defaultTab }) {
                   <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800/80 pb-3 shrink-0">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-150 dark:border-slate-805 flex items-center justify-center text-slate-650 dark:text-slate-300">
-                        {activeTab === "fiverr-bot" ? (
-                          <BotIcon className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
-                        ) : activeTab === "service-guide" ? (
-                          <GuideIcon className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />
-                        ) : (
-                          <AlternateIcon className="w-5 h-5 text-purple-500 dark:text-purple-400" />
-                        )}
+                        {/* No specific icon for active tab needed as only system-prompt remains */}
                       </div>
                       <div>
                         <h2 className="text-xs sm:text-sm font-bold text-slate-850 dark:text-slate-100">
-                          {activeTab === "fiverr-bot"
-                            ? "Auto-Responder Active Blueprint"
-                            : activeTab === "service-guide"
-                              ? "Service Sequence Execution Guide"
-                              : "Backup Failover Directive Table"}
+                          {/* Title can be empty as fiverr-bot is removed */}
                         </h2>
                         <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                           Protocol Document
@@ -389,7 +362,7 @@ export default function UnifiedDashboard({ defaultTab }) {
                 {/* Attachment Context menu */}
                 {showAttachmentMenu && (
                   <div className="absolute right-0 bottom-10 z-35 w-52 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-lg p-2 shadow-lg text-[10px] space-y-1">
-                    <p className="font-bold text-slate-400 p-1">Choose Service Guides</p>
+                    <p className="font-bold text-slate-400 p-1">Choose Context Files</p>
                     <button
                       type="button"
                       onClick={() => toggleAttachment("Initial_Intake_Form.pdf")}

@@ -16,9 +16,6 @@ import {
   PromptIcon,
 } from "./Icons";
 import SystemPromptView from "./SystemPromptView";
-import FiverrBotView from "./FiverrBotView";
-import ServiceGuideView from "./ServiceGuideView";
-import AlternativeGuideView from "./AlternativeGuideView";
 
 // Custom chevron down icon
 const ChevronDownIcon = ({ className = "w-3 h-3" }) => (
@@ -106,11 +103,7 @@ export default function UnifiedDashboard({ defaultTab, showTabs = false }) {
     setShowAttachmentMenu(false);
   };
 
-  const tabsList = [
-    { id: "fiverr-bot", label: "Fiverr Sales Bot", icon: BotIcon },
-    { id: "service-guide", label: "Service Guide", icon: GuideIcon },
-    { id: "alternative-guide", label: "Alternative Guide", icon: AlternateIcon },
-  ];
+  const tabsList = [];
 
   const getHeaderInfo = () => {
     switch (activeTab) {
@@ -119,21 +112,7 @@ export default function UnifiedDashboard({ defaultTab, showTabs = false }) {
           title: "Global Chat",
           description: "Chat with the Global Chat agent to modify behavior or verify lead status.",
         };
-      case "fiverr-bot":
-        return {  
-          title: "Fiverr Sales Bot",
-          description: "Chat with the auto-responder agent to modify behavior or verify lead status.",
-        };
-      case "service-guide":
-        return {
-          title: "Service Guide",
-          description: "Review and adjust onboarding sequences, dispatch check rules, and execution standards.",
-        };
-      case "alternative-guide":
-        return {
-          title: "Alternative Guide",
-          description: "Review secondary protocols, backup drafts, and automated edge-case configurations.",
-        };
+
       default:
         return null;
     }
@@ -206,13 +185,7 @@ export default function UnifiedDashboard({ defaultTab, showTabs = false }) {
         <div className="flex-1 flex flex-col min-h-0 overflow-y-auto pr-1 scrollbar-thin">
           {activeTab === "system-prompt" ? (
             <SystemPromptView />
-          ) : activeTab === "fiverr-bot" ? (
-            <FiverrBotView />
-          ) : activeTab === "service-guide" ? (
-            <ServiceGuideView />
-          ) : (
-            <AlternativeGuideView />
-          )}
+          ) : null}
           <div ref={chatEndRef} />
         </div>
 

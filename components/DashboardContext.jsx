@@ -120,21 +120,18 @@ export const DashboardProvider = ({ children }) => {
     } else if (pathname === "/settings") {
       setActiveTab("settings");
     } else if (pathname === "/") {
-      const validDashboardTabs = ["system-prompt", "fiverr-bot", "service-guide", "alternative-guide"];
+      const validDashboardTabs = ["system-prompt"];
       setActiveTab((current) => {
         if (!validDashboardTabs.includes(current)) {
           return "system-prompt";
         }
-        return current === "fiverr-bot" && pathname === "/" ? "system-prompt" : current;
+        return current;
       });
     }
   }, [pathname]);
   
   // Unread status for tabs to show notification badges
   const [unreadTabs, setUnreadTabs] = useState({
-    "fiverr-bot": false,
-    "service-guide": false,
-    "alternative-guide": false,
   });
 
   // Prompt input and state
@@ -195,9 +192,6 @@ export const DashboardProvider = ({ children }) => {
   // Combined messages state for all views
   const [messages, setMessages] = useState({
     "system-prompt": [],
-    "fiverr-bot": [],
-    "service-guide": [],
-    "alternative-guide": [],
   });
 
   // Read theme from localStorage on mount
@@ -266,9 +260,6 @@ export const DashboardProvider = ({ children }) => {
 
   // Use pathname to determine conversation type instead of active tab
   const getConvTypeFromPath = (path) => {
-    if (path === "/fiverr-bot") return "SALES_BOT";
-    if (path === "/service-guide") return "SERVICE_GUIDE";
-    if (path === "/alternative-guide") return "ALTERNATIVE_GUIDE";
     return "GLOBAL";
   };
 

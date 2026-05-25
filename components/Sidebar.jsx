@@ -4,7 +4,7 @@ import React from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Users, Edit2, Trash2, Plus, Check, X } from "lucide-react";
+import { Users, Edit2, Trash2, Plus, Check, X, Search } from "lucide-react";
 import { useToast } from "./Toast";
 import { useDashboard } from "./DashboardContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -33,19 +33,7 @@ export default function Sidebar({
 
   const [editingId, setEditingId] = React.useState(null);
 
-  const typeOptions = ["Global", "Sales Bot", "Service Guide", "Alternative Guide"];
-  const typeMap = {
-    "Global": "GLOBAL",
-    "Sales Bot": "SALES_BOT",
-    "Service Guide": "SERVICE_GUIDE",
-    "Alternative Guide": "ALTERNATIVE_GUIDE"
-  };
-  const reverseTypeMap = {
-    "GLOBAL": "Global",
-    "SALES_BOT": "Sales Bot",
-    "SERVICE_GUIDE": "Service Guide",
-    "ALTERNATIVE_GUIDE": "Alternative Guide"
-  };
+
 
   const modelOptions = ["GPT", "Claude (Haiku)", "Claude (Sonnet)"];
   const modelMap = {
@@ -64,10 +52,12 @@ export default function Sidebar({
   const [deleteConvId, setDeleteConvId] = React.useState(null);
   const [newConvForm, setNewConvForm] = React.useState({
     name: "",
-    type: "SALES_BOT",
+    categoryId: "",
+    type: "GLOBAL",
     aiModel: "GPT"
   });
 
+  const [searchQuery, setSearchQuery] = React.useState("");
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => {
     setMounted(true);
@@ -75,9 +65,6 @@ export default function Sidebar({
 
   const menuItems = [
     { id: "system-prompt", label: "Global Chat", icon: ConversationIcon, href: "/" },
-    { id: "fiverr-bot", label: "Fiverr Sales Bot", icon: BotIcon, href: "/fiverr-bot" },
-    { id: "service-guide", label: "Service Guide", icon: GuideIcon, href: "/service-guide" },
-    { id: "alternative-guide", label: "Alternative Guide", icon: AlternateIcon, href: "/alternative-guide" },
   ];
 
   if (profile?.role === "SYSTEM_OWNER") {
@@ -109,6 +96,27 @@ export default function Sidebar({
   
   const conversations = conversationsResponse?.data || [];
 
+  const { data: categoriesResponse } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const res = await apiFetch("/category/all");
+      return res;
+    },
+  });
+  
+  const categories = categoriesResponse?.data || [];
+  const serviceOptions = categories.map(c => c.type);
+
+  const filteredConversations = conversations.filter((conv) =>
+    conv.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  React.useEffect(() => {
+    if (categories.length > 0 && !newConvForm.categoryId) {
+      setNewConvForm(prev => ({ ...prev, categoryId: categories[0].id }));
+    }
+  }, [categories, newConvForm.categoryId]);
+
   const createMutation = useMutation({
     mutationFn: async (formData) => {
       return apiFetch("/conversation", {
@@ -119,7 +127,7 @@ export default function Sidebar({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
       setShowCreateModal(false);
-      setNewConvForm({ name: "", type: "SALES_BOT", aiModel: "GPT" });
+      setNewConvForm({ name: "", categoryId: categories.length > 0 ? categories[0].id : "", type: "GLOBAL", aiModel: "GPT" });
       addToast("Conversation created", "success");
     },
     onError: (err) => addToast(err.message, "error"),
@@ -195,9 +203,14 @@ export default function Sidebar({
           return (
             <Link
               key={item.id}
-              href={item.href}
-              onClick={() => {
-                setActiveConversationId(null);
+              href={item.href || "#"}
+              onClick={(e) => {
+                if (item.id === "system-prompt") {
+                  e.preventDefault();
+                  setShowCreateModal(true);
+                } else {
+                  setActiveConversationId(null);
+                }
                 if (window.innerWidth < 1024) setIsOpen(false);
               }}
               title={!isOpen ? item.label : ""}
@@ -228,14 +241,17 @@ export default function Sidebar({
       {/* Recents list styled like ChatGPT */}
       {isOpen && (
         <div className="mx-3 mb-6 pt-5 border-t border-slate-100 dark:border-slate-800/80 flex-1 flex flex-col min-h-0 overflow-hidden select-none animate-fade-in">
-          <div className="mb-4 px-1">
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
-            >
-              <Edit2 className="w-4 h-4" />
-              <span>New chat</span>
-            </button>
+          <div className="mb-4 px-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400 dark:text-slate-500" />
+              <input
+                type="text"
+                placeholder="Search clients..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-slate-100 dark:bg-slate-800/60 border-none rounded-lg pl-9 pr-3 py-2 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow"
+              />
+            </div>
           </div>
 
           <div className="mb-3 px-3 flex items-center justify-between text-slate-400 dark:text-slate-500 shrink-0">
@@ -246,10 +262,10 @@ export default function Sidebar({
           <div className="flex-1 overflow-y-auto px-1 space-y-1 scrollbar-thin">
             {isLoading ? (
               <div className="text-sm text-center py-4 text-slate-400">Loading...</div>
-            ) : conversations.length === 0 ? (
+            ) : filteredConversations.length === 0 ? (
               <div className="text-sm text-center py-4 text-slate-400">No conversations</div>
             ) : (
-              conversations.map((conv) => {
+              filteredConversations.map((conv) => {
                 const isActiveConv = activeConversationId === conv.id;
                 const isEditing = editingId === conv.id;
 
@@ -295,9 +311,6 @@ export default function Sidebar({
                         <button
                           onClick={() => {
                             const routeMap = {
-                              SALES_BOT: "/fiverr-bot",
-                              SERVICE_GUIDE: "/service-guide",
-                              ALTERNATIVE_GUIDE: "/alternative-guide",
                               GLOBAL: "/"
                             };
                             const targetRoute = routeMap[conv.type] || "/";
@@ -397,23 +410,28 @@ export default function Sidebar({
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Conversation Name</label>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Client Name</label>
                 <input
                   type="text"
                   value={newConvForm.name}
                   onChange={(e) => setNewConvForm({ ...newConvForm, name: e.target.value })}
                   className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
-                  placeholder="e.g. Sales Related Topics"
+                  placeholder="e.g. Johan Flueren"
                   autoFocus
                 />
               </div>
 
               <div>
                 <Dropdown
-                  label="Type"
-                  options={typeOptions}
-                  value={reverseTypeMap[newConvForm.type]}
-                  onSelect={(val) => setNewConvForm({ ...newConvForm, type: typeMap[val] })}
+                  label="Service"
+                  options={serviceOptions}
+                  value={categories.find(c => c.id === newConvForm.categoryId)?.type || ""}
+                  onSelect={(val) => {
+                    const selectedCat = categories.find(c => c.type === val);
+                    if (selectedCat) {
+                      setNewConvForm({ ...newConvForm, categoryId: selectedCat.id });
+                    }
+                  }}
                   className="w-full"
                   labelClass="!text-sm !font-bold !text-slate-700 dark:!text-slate-300 !mb-1"
                   inputClass="!bg-slate-50 dark:!bg-slate-900/50 !text-slate-800 dark:!text-slate-100 !px-3 !py-2 !rounded-xl !border !border-slate-200 dark:!border-slate-700 !outline-none focus:!ring-2 focus:!ring-indigo-500 !transition-shadow !appearance-none"

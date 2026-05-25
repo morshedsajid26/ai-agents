@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Sales Assistant AI-Native CRM",
-  description: "Autonomous Fiverr lead conversion & inquiry management dashboard.",
+  description: "Autonomous CRM sales agent & inquiry management dashboard.",
 };
 
 export default function RootLayout({ children }) {

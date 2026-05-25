@@ -29,23 +29,7 @@ export default function Topbar({ activeTab, searchQuery, setSearchQuery, onMenuC
     setIsDropdownOpen((prev) => !prev);
   };
 
-  // Dynamic search input placeholder based on active tab
-  const getSearchPlaceholder = () => {
-    switch (activeTab) {
-      case "dashboard":
-        return "Search leads, bots, or documentation...";
-      case "fiverr-bot":
-        return "Search interactions or clients...";
-      case "service-guide":
-        return "Search service documentation...";
-      case "system-prompt":
-        return "Search prompts...";
-      case "alternative-guide":
-        return "Search alternate guides...";
-      default:
-        return "Search...";
-    }
-  };
+
 
   // Render profile section dynamically
   const renderProfileSection = () => {
