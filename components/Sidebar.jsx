@@ -169,7 +169,7 @@ export default function Sidebar({
       }`}
     >
       {/* Header / Branding (Fixed Logo) */}
-      <div className={`h-[76px] flex items-center border-b border-slate-100/50 dark:border-slate-800/50 shrink-0 ${
+      <div className={`h-[76px] flex items-center  shrink-0 ${
         isOpen ? "px-6" : "justify-center px-2"
       }`}>
         {isOpen ? (
@@ -240,7 +240,7 @@ export default function Sidebar({
 
       {/* Recents list styled like ChatGPT */}
       {isOpen && (
-        <div className="mx-3 mb-6 pt-5 border-t border-slate-100 dark:border-slate-800/80 flex-1 flex flex-col min-h-0 overflow-hidden select-none animate-fade-in">
+        <div className="mx-3 mb-6 pt-5 flex-1 flex flex-col min-h-0 overflow-hidden select-none animate-fade-in">
           <div className="mb-4 px-2">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400 dark:text-slate-500" />
