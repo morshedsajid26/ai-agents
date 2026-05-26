@@ -525,7 +525,7 @@ export default function AgentTrainingView() {
                 </div>
 
                 {/* Tools Switcher Pill */}
-                <button
+                {/* <button
                   type="button"
                   onClick={toggleTool}
                   className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-xxs font-bold transition-all duration-150 cursor-pointer ${toolsActive
@@ -535,7 +535,7 @@ export default function AgentTrainingView() {
                 >
                   <SliderIcon className="w-3 h-3" />
                   <span>Tools</span>
-                </button>
+                </button> */}
 
                 {/* Speed Mode Pill */}
                 {/* <button
