@@ -8,10 +8,10 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Mail, Sun, Moon, ArrowRight, Bot } from "lucide-react";
 import toast from "react-hot-toast";
-import InputField from "../../components/InputField";
-import Password from "../../components/Password";
-import { useDashboard } from "../../components/DashboardContext";
-import { apiFetch } from "../../utils/api";
+import InputField from "../../../components/InputField";
+import Password from "../../../components/Password";
+import { useDashboard } from "../../../components/DashboardContext";
+import { apiFetch } from "../../../utils/api";
 
 export default function LoginPage() {
   const router = useRouter();

@@ -4,26 +4,39 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { User, Mail, Sun, Moon, ArrowRight, Bot } from "lucide-react";
+import { Sun, Moon, ArrowRight, ShieldAlert, ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
-import InputField from "../../components/InputField";
-import Password from "../../components/Password";
-import { useDashboard } from "../../components/DashboardContext";
+import Password from "../../../components/Password";
+import { useDashboard } from "../../../components/DashboardContext";
 
-export default function RegisterPage() {
+import { apiFetch } from "../../../utils/api";
+import { useEffect } from "react";
+// Removed useSearchParams and Suspense since we don't need query params anymore
+
+export default function ResetPasswordPage() {
   const router = useRouter();
   const { theme, toggleTheme } = useDashboard();
   
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [token, setToken] = useState("");
+  
+  useEffect(() => {
+    // Read from sessionStorage securely on client side mount
+    const storedEmail = sessionStorage.getItem("resetEmail");
+    const storedToken = sessionStorage.getItem("resetToken");
+    
+    if (storedEmail) setEmail(storedEmail);
+    if (storedToken) setToken(storedToken);
+  }, []);
+  
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleRegister = async (e) => {
+  const handleResetPassword = async (e) => {
     e.preventDefault();
-    
-    if (!name || !email || !password || !confirmPassword) {
+
+    if (!password || !confirmPassword) {
       toast.error("Please fill in all fields");
       return;
     }
@@ -39,12 +52,29 @@ export default function RegisterPage() {
     }
 
     setIsLoading(true);
-    // Simulate API request
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsLoading(false);
+    try {
+      await apiFetch("/auth/reset-password", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          newPassword: password 
+        }),
+      });
 
-    toast.success("Account created successfully!");
-    router.push("/login");
+      // Clear the tokens from sessionStorage upon successful reset
+      sessionStorage.removeItem("resetToken");
+      sessionStorage.removeItem("resetEmail");
+
+      toast.success("Password reset successfully! Please sign in.");
+      router.push("/login");
+    } catch (error) {
+      console.error("Reset password failed:", error);
+      toast.error(error.message || "Failed to reset password. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -77,44 +107,22 @@ export default function RegisterPage() {
       >
         {/* Brand Logo / Header */}
         <div className="flex flex-col items-center text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-500/20 dark:bg-indigo-500 dark:shadow-indigo-400/10">
-            <Bot className="h-6 w-6" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-500/20 dark:bg-indigo-50 dark:shadow-indigo-400/10">
+            <ShieldAlert className="h-6 w-6" />
           </div>
           <h2 className="mt-6 text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-            Create account
+            Reset password
           </h2>
-          <p className="mt-2 text-sm text-slate-550 dark:text-slate-400">
-            Get started with Sales Assistant AI CRM today
+          <p className="mt-2 text-sm text-slate-550 dark:text-slate-400 max-w-[280px]">
+            Please choose a strong password you haven't used before.
           </p>
         </div>
 
         {/* Card Body */}
         <div className="mt-8 rounded-3xl border border-slate-200/70 bg-white/70 p-8 shadow-xl backdrop-blur-xl dark:border-slate-800/80 dark:bg-slate-900/40 dark:shadow-2xl">
-          <form onSubmit={handleRegister} className="space-y-5">
-            <InputField
-              label="Full Name"
-              type="text"
-              placeholder="John Doe"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              autoComplete="name"
-              labelClass="dark:text-slate-300"
-            />
-
-            <InputField
-              label="Email Address"
-              type="email"
-              placeholder="name@company.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              labelClass="dark:text-slate-300"
-            />
-
+          <form onSubmit={handleResetPassword} className="space-y-6">
             <Password
-              label="Password"
+              label="New Password"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -124,7 +132,7 @@ export default function RegisterPage() {
             />
 
             <Password
-              label="Confirm Password"
+              label="Confirm New Password"
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -132,31 +140,6 @@ export default function RegisterPage() {
               name="password_confirmation"
               labelClass="dark:text-slate-300"
             />
-
-            {/* Terms and conditions */}
-            <div className="flex items-start">
-              <div className="flex h-5 items-center">
-                <input
-                  id="terms"
-                  name="terms"
-                  type="checkbox"
-                  required
-                  className="h-4.5 w-4.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:focus:ring-offset-slate-900"
-                />
-              </div>
-              <div className="ml-2.5 text-sm">
-                <label htmlFor="terms" className="font-medium text-slate-500 dark:text-slate-400 select-none cursor-pointer">
-                  I agree to the{" "}
-                  <a href="#" className="font-bold text-indigo-600 hover:text-indigo-550 dark:text-indigo-455 dark:hover:text-indigo-400">
-                    Terms of Service
-                  </a>{" "}
-                  and{" "}
-                  <a href="#" className="font-bold text-indigo-600 hover:text-indigo-550 dark:text-indigo-455 dark:hover:text-indigo-400">
-                    Privacy Policy
-                  </a>
-                </label>
-              </div>
-            </div>
 
             {/* Submit Button */}
             <button
@@ -168,7 +151,7 @@ export default function RegisterPage() {
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
               ) : (
                 <>
-                  <span>Create Account</span>
+                  <span>Reset Password</span>
                   <ArrowRight className="h-4.5 w-4.5 transition-transform group-hover:translate-x-0.5" />
                 </>
               )}
@@ -177,15 +160,15 @@ export default function RegisterPage() {
         </div>
 
         {/* Footer Link */}
-        <p className="mt-8 text-center text-sm text-slate-550 dark:text-slate-400">
-          Already have an account?{" "}
+        <div className="mt-8 text-center">
           <Link
             href="/login"
-            className="font-bold text-indigo-600 hover:text-indigo-550 dark:text-indigo-455 dark:hover:text-indigo-400"
+            className="inline-flex items-center gap-2 text-sm font-bold text-slate-550 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-250 transition-colors"
           >
-            Sign in
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to sign in</span>
           </Link>
-        </p>
+        </div>
       </motion.div>
     </div>
   );

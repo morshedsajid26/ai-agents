@@ -5,9 +5,9 @@ import { motion } from "framer-motion";
 import { Sun, Moon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
-import OTPInput from "../../components/OTPInput";
-import { useDashboard } from "../../components/DashboardContext";
-import { apiFetch } from "../../utils/api";
+import OTPInput from "../../../components/OTPInput";
+import { useDashboard } from "../../../components/DashboardContext";
+import { apiFetch } from "../../../utils/api";
 
 function VerifyOtpContent() {
   const { theme, toggleTheme } = useDashboard();

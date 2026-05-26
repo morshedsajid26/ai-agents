@@ -3,8 +3,8 @@
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import AgentTrainingView from "../../components/AgentTrainingView";
-import { useDashboard } from "../../components/DashboardContext";
+import AgentTrainingView from "../../../components/AgentTrainingView";
+import { useDashboard } from "../../../components/DashboardContext";
 import Cookies from "js-cookie";
 
 export default function Page() {

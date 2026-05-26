@@ -6,10 +6,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Cookies from "js-cookie";
 import { UserPlus, Shield, Mail, User, ShieldCheck, X, ShieldAlert, Key, Trash2, Pencil } from "lucide-react";
 import toast from "react-hot-toast";
-import { useDashboard } from "../../components/DashboardContext";
-import InputField from "../../components/InputField";
-import { Table, TableRow, TableCell } from "../../components/Table";
-import { apiFetch } from "../../utils/api";
+import { useDashboard } from "../../../components/DashboardContext";
+import InputField from "../../../components/InputField";
+import { Table, TableRow, TableCell } from "../../../components/Table";
+import { apiFetch } from "../../../utils/api";
 
 export default function UserManagementPage() {
   const { profile } = useDashboard();
