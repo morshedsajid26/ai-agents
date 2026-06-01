@@ -91,6 +91,9 @@ export default function AgentTrainingView() {
     SONNET: "Claude (Sonnet)"
   };
   const [showModelMenu, setShowModelMenu] = useState(false);
+  
+  const [activeCategory, setActiveCategory] = useState("");
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
   const [toolsActive, setToolsActive] = useState(true);
   const [fastActive, setFastActive] = useState(true);
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
@@ -110,6 +113,37 @@ export default function AgentTrainingView() {
   useEffect(() => {
     setActiveTab("agent-training");
   }, [setActiveTab]);
+
+  // Fetch categories from GET /category/all
+  const { data: categories = [], isLoading: isLoadingCategories } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      try {
+        const json = await apiFetch("/category/all");
+        // Ensure we return an array regardless of the API response structure
+        return Array.isArray(json) ? json : (Array.isArray(json?.data) ? json.data : (Array.isArray(json?.categories) ? json.categories : []));
+      } catch (e) {
+        console.error("Failed to fetch categories:", e);
+        return [];
+      }
+    }
+  });
+
+  // Set default category
+  useEffect(() => {
+    const list = Array.isArray(categories) ? categories : [];
+    if (list.length > 0 && !activeCategory) {
+      setActiveCategory(list[0].id || list[0]._id);
+    }
+  }, [categories, activeCategory]);
+
+  const handleCategoryChange = (categoryId) => {
+    setActiveCategory(categoryId);
+    setShowCategoryMenu(false);
+    const list = Array.isArray(categories) ? categories : [];
+    const cat = list.find(c => (c.id || c._id) === categoryId);
+    if (cat) addToast(`Service switched to ${cat.type || cat.name || cat.title || "Service"}`, "info");
+  };
 
   // Fetch training logs from GET /agent-training
   const { data: serverTrainingData = [] } = useQuery({
@@ -288,6 +322,9 @@ export default function AgentTrainingView() {
     const formData = new FormData();
     formData.append("modelName", activeModel);
     formData.append("prompt", trainingInput.trim());
+    if (activeCategory) {
+      formData.append("categoryId", activeCategory);
+    }
     if (attachedFiles.length > 0) {
       formData.append("document", attachedFiles[0].file);
     }
@@ -550,6 +587,8 @@ export default function AgentTrainingView() {
                   <span>{fastActive ? "Fast" : "Reasoning"}</span>
                 </button> */}
 
+               
+
                 {/* Model Selector Pill */}
                 <div className="relative">
                   <button
@@ -574,6 +613,41 @@ export default function AgentTrainingView() {
                           {modelLabels[m]}
                         </button>
                       ))}
+                    </div>
+                  )}
+                </div>
+
+                 {/* Category Selector Pill */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowCategoryMenu(!showCategoryMenu)}
+                    className="flex items-center gap-1 px-3 py-1 rounded-full border border-slate-250 dark:border-slate-800 hover:bg-slate-200/50 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 text-xxs font-bold transition-all duration-150 cursor-pointer max-w-[150px]"
+                  >
+                    <span className="truncate">
+                      {isLoadingCategories 
+                        ? "Loading..." 
+                        : ((Array.isArray(categories) ? categories : []).find(c => (c.id || c._id) === activeCategory)?.type || (Array.isArray(categories) ? categories : []).find(c => (c.id || c._id) === activeCategory)?.name || "Select Service")}
+                    </span>
+                    <ChevronDownIcon className="w-2.5 h-2.5 opacity-60 shrink-0" />
+                  </button>
+
+                  {showCategoryMenu && (
+                    <div className="absolute left-0 bottom-8 z-30 w-48 bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 rounded-xl p-1.5 shadow-xl text-xs space-y-0.5 animate-scale-in max-h-48 overflow-y-auto scrollbar-thin">
+                      {(Array.isArray(categories) ? categories : []).map((c) => (
+                        <button
+                          key={c.id || c._id}
+                          type="button"
+                          onClick={() => handleCategoryChange(c.id || c._id)}
+                          className={`w-full text-left px-2 py-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-605 dark:text-slate-355 cursor-pointer truncate ${activeCategory === (c.id || c._id) ? "text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50/50 dark:bg-slate-800/40" : ""
+                            }`}
+                        >
+                          {c.type || c.name || c.title || "Unknown"}
+                        </button>
+                      ))}
+                      {(Array.isArray(categories) ? categories : []).length === 0 && !isLoadingCategories && (
+                        <div className="px-2 py-1.5 text-slate-400">No services found</div>
+                      )}
                     </div>
                   )}
                 </div>
