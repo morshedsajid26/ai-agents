@@ -200,6 +200,22 @@ export default function AgentTrainingView() {
         hour12: true,
       });
 
+      // Extract multiple files if available
+      const itemFiles = [];
+      const sourceDocs = item.documents || item.files || item.attachments || item.documentUrls || [];
+      const docsArray = Array.isArray(sourceDocs) ? sourceDocs : (sourceDocs ? [sourceDocs] : []);
+      
+      if (docsArray.length > 0) {
+        docsArray.forEach(doc => {
+           const docStr = typeof doc === 'string' ? doc : (doc.name || doc.originalName || doc.filename || doc.fileName || doc.path || doc.url || doc.fileUrl || doc.documentUrl || "");
+           if (docStr) itemFiles.push(docStr.split("/").pop());
+        });
+      } else if (item.documentPath) {
+        itemFiles.push(item.documentPath.split("/").pop());
+      } else if (item.documentUrl) {
+        itemFiles.push(item.documentUrl.split("/").pop());
+      }
+
       // User's training prompt
       logs.push({
         id: item.id,
@@ -207,7 +223,7 @@ export default function AgentTrainingView() {
         text: item.prompt,
         time: timeString,
         model: modelLabels[item.modelName] || item.modelName,
-        files: item.documentPath ? [item.documentPath.split("/").pop()] : [],
+        files: itemFiles,
         isClickable: true,
       });
     });
@@ -248,18 +264,19 @@ export default function AgentTrainingView() {
   };
 
   const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    const fileData = {
-      id: Date.now().toString(),
+    const newFiles = Array.from(files).map((file, index) => ({
+      id: Date.now().toString() + "_" + index,
       name: file.name,
       size: (file.size / 1024).toFixed(1) + " KB",
       file: file,
-    };
+      url: URL.createObjectURL(file),
+    }));
 
-    setAttachedFiles([fileData]); // Allow 1 document at a time
-    addToast(`Attached file: ${file.name}`, "success");
+    setAttachedFiles(prev => [...prev, ...newFiles]);
+    addToast(`Attached ${files.length} file(s)`, "success");
     e.target.value = "";
   };
 
@@ -272,6 +289,7 @@ export default function AgentTrainingView() {
       id: Date.now().toString(),
       name: file.name,
       url: url,
+      file: file,
     };
 
     setAttachedImages((prev) => [...prev, imgData]);
@@ -292,6 +310,7 @@ export default function AgentTrainingView() {
           id: Date.now().toString(),
           name: `Pasted_Image_${attachedImages.length + 1}.png`,
           url: url,
+          file: file,
         };
 
         setAttachedImages((prev) => [...prev, imgData]);
@@ -302,6 +321,10 @@ export default function AgentTrainingView() {
   };
 
   const handleRemoveFile = (id) => {
+    const fileToRemove = attachedFiles.find((f) => f.id === id);
+    if (fileToRemove && fileToRemove.url) {
+      URL.revokeObjectURL(fileToRemove.url);
+    }
     setAttachedFiles((prev) => prev.filter((f) => f.id !== id));
     addToast("File attachment removed", "info");
   };
@@ -317,7 +340,7 @@ export default function AgentTrainingView() {
 
   const handleTrainSubmit = (e) => {
     if (e) e.preventDefault();
-    if (!trainingInput.trim() && attachedFiles.length === 0) return;
+    if (!trainingInput.trim() && attachedFiles.length === 0 && attachedImages.length === 0) return;
 
     const formData = new FormData();
     formData.append("modelName", activeModel);
@@ -326,7 +349,14 @@ export default function AgentTrainingView() {
       formData.append("categoryId", activeCategory);
     }
     if (attachedFiles.length > 0) {
-      formData.append("document", attachedFiles[0].file);
+      attachedFiles.forEach(f => {
+        formData.append("documents", f.file, f.name);
+      });
+    }
+    if (attachedImages.length > 0) {
+      attachedImages.forEach(img => {
+        formData.append("documents", img.file, img.name);
+      });
     }
 
     trainMutation.mutate(formData);
@@ -381,8 +411,8 @@ export default function AgentTrainingView() {
 
                   {log.files && log.files.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mb-2">
-                      {log.files.map((f) => (
-                        <span key={f} className="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 bg-slate-700/80 text-slate-200 rounded">
+                      {log.files.map((f, i) => (
+                        <span key={i} className="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 bg-slate-700/80 text-slate-200 rounded">
                           <FileIcon className="w-2.5 h-2.5" />
                           {f}
                         </span>
@@ -440,7 +470,9 @@ export default function AgentTrainingView() {
               {attachedFiles.map((file) => (
                 <div
                   key={file.id}
-                  className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-3 py-1.5 rounded-xl border border-indigo-150 dark:border-indigo-900/40 flex items-center gap-2 shadow-xxs hover:border-indigo-300 dark:hover:border-indigo-850 group transition-all duration-150 relative"
+                  onClick={() => window.open(file.url, "_blank")}
+                  className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-3 py-1.5 rounded-xl border border-indigo-150 dark:border-indigo-900/40 flex items-center gap-2 shadow-xxs hover:border-indigo-300 dark:hover:border-indigo-850 group transition-all duration-150 relative cursor-pointer"
+                  title="Click to preview file"
                 >
                   <FileIcon className="w-3.5 h-3.5 shrink-0" />
                   <div className="flex flex-col">
@@ -449,7 +481,10 @@ export default function AgentTrainingView() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleRemoveFile(file.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveFile(file.id);
+                    }}
                     className="h-4 w-4 rounded-full flex items-center justify-center bg-indigo-200/50 hover:bg-indigo-200 dark:bg-indigo-900/40 dark:hover:bg-indigo-850 text-indigo-600 dark:text-indigo-400 cursor-pointer ml-1 text-xs font-bold"
                     title="Remove attachment"
                   >
@@ -493,13 +528,15 @@ export default function AgentTrainingView() {
             {/* Hidden Input Triggers */}
             <input
               type="file"
+              multiple
+              accept=".jpeg,.jpg,.png,.gif,.pdf,.doc,.docx"
               ref={fileInputRef}
               onChange={handleFileChange}
               className="hidden"
             />
             <input
               type="file"
-              accept="image/*"
+              accept=".jpeg,.jpg,.png,.gif"
               ref={imageInputRef}
               onChange={handleImageChange}
               className="hidden"
@@ -713,20 +750,36 @@ export default function AgentTrainingView() {
                   </div>
                 </div>
 
-                {trainingDetail.documentPath && (
-                  <div className="border-b border-slate-100 dark:border-slate-800/60 pb-3">
-                    <span className="block text-xs text-slate-400 dark:text-slate-500 uppercase font-bold mb-1">Attached Dataset</span>
-                    <a
-                      href={trainingDetail.documentUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-350 font-bold"
-                    >
-                      <FileIcon className="w-4 h-4" />
-                      <span>{trainingDetail.documentPath.split("/").pop()}</span>
-                    </a>
-                  </div>
-                )}
+                {(() => {
+                  const sourceDocs = trainingDetail.documents || trainingDetail.files || trainingDetail.attachments || trainingDetail.documentUrls || (trainingDetail.documentPath ? [trainingDetail.documentPath] : []) || (trainingDetail.documentUrl ? [trainingDetail.documentUrl] : []);
+                  const docsArray = Array.isArray(sourceDocs) ? sourceDocs : (sourceDocs ? [sourceDocs] : []);
+                  
+                  if (docsArray.length === 0) return null;
+
+                  return (
+                    <div className="border-b border-slate-100 dark:border-slate-800/60 pb-3">
+                      <span className="block text-xs text-slate-400 dark:text-slate-500 uppercase font-bold mb-2">Attached Datasets</span>
+                      <div className="flex flex-col gap-2">
+                        {docsArray.map((doc, idx) => {
+                          const docUrl = typeof doc === 'string' ? doc : (doc.url || doc.fileUrl || doc.documentUrl || doc.path || "");
+                          const docName = typeof doc === 'string' ? doc : (doc.name || doc.originalName || doc.filename || doc.fileName || doc.path || doc.url || "Document");
+                          return (
+                            <a
+                              key={idx}
+                              href={docUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-350 font-bold w-fit"
+                            >
+                              <FileIcon className="w-4 h-4" />
+                              <span>{docName.split("/").pop()}</span>
+                            </a>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div>
                   <span className="block text-xs text-slate-400 dark:text-slate-500 uppercase font-bold mb-1">Prompt Weight Guidelines</span>
