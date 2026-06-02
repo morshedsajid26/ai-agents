@@ -2,8 +2,7 @@
 
 import React from "react";
 import { useDashboard } from "./DashboardContext";
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
-
+import { AlertTriangle, CheckCircle2, Globe, ExternalLink } from "lucide-react";
 export default function SystemPromptView({ agentFilter }) {
   const { messages, isTyping, activeConversationId, conversationMessages, isLoadingMessages } = useDashboard();
 
@@ -174,6 +173,31 @@ export default function SystemPromptView({ agentFilter }) {
                         <h3 className="font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest text-xs border-b border-indigo-100 dark:border-indigo-500/20 pb-2 mb-3">
                           {agentObj.agent_name.replace(/_/g, " ")}
                         </h3>
+                        {agentObj.web_search_used && agentObj.sources?.length > 0 && (
+                          <div className="bg-blue-50/50 dark:bg-blue-900/10 rounded-xl p-3 border border-blue-100 dark:border-blue-800/30 mb-3">
+                            <h4 className="font-bold text-blue-800 dark:text-blue-300 text-xs mb-2 uppercase tracking-wide flex items-center gap-1.5">
+                              <Globe className="w-3.5 h-3.5 shrink-0" />
+                              Sources Consulted
+                            </h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {agentObj.sources.map((src, i) => (
+                                <a 
+                                  key={i}
+                                  href={src.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-800/50 border border-blue-100 dark:border-blue-800/30 hover:border-blue-300 dark:hover:border-blue-600/50 hover:shadow-sm transition-all group"
+                                >
+                                  <div className="flex flex-col min-w-0 pr-2">
+                                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{src.title}</span>
+                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate">{src.source_type}</span>
+                                  </div>
+                                  <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-blue-500 shrink-0" />
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                         {agentObj.sections?.map((sec, i) => (
                           <div key={i} className="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3 border border-slate-100 dark:border-slate-700/50">
                             <h4 className="font-bold text-slate-800 dark:text-slate-100 text-base mb-1.5 uppercase tracking-wide flex items-center gap-2">
@@ -190,6 +214,31 @@ export default function SystemPromptView({ agentFilter }) {
                   </div>
                 ) : msg.structuredData?.sections?.length > 0 ? (
                   <div className="space-y-3">
+                    {msg.structuredData.web_search_used && msg.structuredData.sources?.length > 0 && (
+                      <div className="bg-blue-50/50 dark:bg-blue-900/10 rounded-xl p-3 border border-blue-100 dark:border-blue-800/30 mb-3">
+                        <h4 className="font-bold text-blue-800 dark:text-blue-300 text-xs mb-2 uppercase tracking-wide flex items-center gap-1.5">
+                          <Globe className="w-3.5 h-3.5 shrink-0" />
+                          Sources Consulted
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {msg.structuredData.sources.map((src, i) => (
+                            <a 
+                              key={i}
+                              href={src.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-800/50 border border-blue-100 dark:border-blue-800/30 hover:border-blue-300 dark:hover:border-blue-600/50 hover:shadow-sm transition-all group"
+                            >
+                              <div className="flex flex-col min-w-0 pr-2">
+                                <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{src.title}</span>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate">{src.source_type}</span>
+                              </div>
+                              <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-blue-500 shrink-0" />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     {msg.structuredData.sections.map((sec, i) => (
                       <div key={i} className="bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3 border border-slate-100 dark:border-slate-700/50">
                         <h4 className="font-bold text-slate-800 dark:text-slate-100 text-base mb-1.5 uppercase tracking-wide flex items-center gap-2">

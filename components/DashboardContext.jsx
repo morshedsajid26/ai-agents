@@ -281,22 +281,12 @@ export const DashboardProvider = ({ children }) => {
 
     try {
       if (!targetConvId) {
-
-        // Create new conversation
-        const convRes = await apiFetch("/conversation", {
-          method: "POST",
-          body: JSON.stringify({
-            name: currentInput.substring(0, 30) + (currentInput.length > 30 ? "..." : ""),
-            type: convType,
-            aiModel: activeModel,
-          }),
-        });
-
-        if (!convRes.success) throw new Error("Failed to create conversation");
-        
-        targetConvId = convRes.data.id;
-        setActiveConversationId(targetConvId);
-        queryClient.invalidateQueries({ queryKey: ["conversations"] });
+        addToast("Please select or create a new chat", "warning");
+        setIsTyping(false);
+        setStatus("System Ready");
+        setStatusColor("bg-emerald-500");
+        setPromptText(currentInput);
+        return;
       }
 
       const optimisticMsg = {
