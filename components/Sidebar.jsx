@@ -439,18 +439,20 @@ export default function Sidebar({
                 />
               </div>
 
-              <div>
-                <Dropdown
-                  label="AI Model"
-                  options={modelOptions}
-                  value={reverseModelMap[newConvForm.aiModel]}
-                  onSelect={(val) => setNewConvForm({ ...newConvForm, aiModel: modelMap[val] })}
-                  className="w-full"
-                  labelClass="!text-sm !font-bold !text-slate-700 dark:!text-slate-300 !mb-1"
-                  inputClass="!bg-slate-50 dark:!bg-slate-900/50 !text-slate-800 dark:!text-slate-100 !px-3 !py-2 !rounded-xl !border !border-slate-200 dark:!border-slate-700 !outline-none focus:!ring-2 focus:!ring-indigo-500 !transition-shadow !appearance-none"
-                  optionClass="dark:!bg-[#0f172a] dark:!border-slate-700 dark:!text-slate-200"
-                />
-              </div>
+              {profile?.role === "SYSTEM_OWNER" && (
+                <div>
+                  <Dropdown
+                    label="AI Model"
+                    options={modelOptions}
+                    value={reverseModelMap[newConvForm.aiModel]}
+                    onSelect={(val) => setNewConvForm({ ...newConvForm, aiModel: modelMap[val] })}
+                    className="w-full"
+                    labelClass="!text-sm !font-bold !text-slate-700 dark:!text-slate-300 !mb-1"
+                    inputClass="!bg-slate-50 dark:!bg-slate-900/50 !text-slate-800 dark:!text-slate-100 !px-3 !py-2 !rounded-xl !border !border-slate-200 dark:!border-slate-700 !outline-none focus:!ring-2 focus:!ring-indigo-500 !transition-shadow !appearance-none"
+                    optionClass="dark:!bg-[#0f172a] dark:!border-slate-700 dark:!text-slate-200"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="mt-6 flex justify-end gap-3">

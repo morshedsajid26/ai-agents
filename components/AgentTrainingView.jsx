@@ -79,7 +79,7 @@ const ImageIcon = ({ className = "w-4 h-4" }) => (
 );
 
 export default function AgentTrainingView() {
-  const { setActiveTab, theme } = useDashboard();
+  const { setActiveTab, theme, profile } = useDashboard();
   const { addToast } = useToast();
 
   // Local state for Agent Training
@@ -627,32 +627,34 @@ export default function AgentTrainingView() {
                
 
                 {/* Model Selector Pill */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setShowModelMenu(!showModelMenu)}
-                    className="flex items-center gap-1 px-3 py-1 rounded-full border border-slate-250 dark:border-slate-800 hover:bg-slate-200/50 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 text-xxs font-bold transition-all duration-150 cursor-pointer"
-                  >
-                    <span>{modelLabels[activeModel] || activeModel}</span>
-                    <ChevronDownIcon className="w-2.5 h-2.5 opacity-60" />
-                  </button>
+                {profile?.role === "SYSTEM_OWNER" && (
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowModelMenu(!showModelMenu)}
+                      className="flex items-center gap-1 px-3 py-1 rounded-full border border-slate-250 dark:border-slate-800 hover:bg-slate-200/50 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 text-xxs font-bold transition-all duration-150 cursor-pointer"
+                    >
+                      <span>{modelLabels[activeModel] || activeModel}</span>
+                      <ChevronDownIcon className="w-2.5 h-2.5 opacity-60" />
+                    </button>
 
-                  {showModelMenu && (
-                    <div className="absolute left-0 bottom-8 z-30 w-36 bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 rounded-xl p-1.5 shadow-xl text-xs space-y-0.5 animate-scale-in">
-                      {["GPT", "CLAUDE_HAIKU", "SONNET"].map((m) => (
-                        <button
-                          key={m}
-                          type="button"
-                          onClick={() => handleModelChange(m)}
-                          className={`w-full text-left px-2 py-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-605 dark:text-slate-355 cursor-pointer ${activeModel === m ? "text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50/50 dark:bg-slate-800/40" : ""
-                            }`}
-                        >
-                          {modelLabels[m]}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                    {showModelMenu && (
+                      <div className="absolute left-0 bottom-8 z-30 w-36 bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 rounded-xl p-1.5 shadow-xl text-xs space-y-0.5 animate-scale-in">
+                        {["GPT", "CLAUDE_HAIKU", "SONNET"].map((m) => (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => handleModelChange(m)}
+                            className={`w-full text-left px-2 py-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-605 dark:text-slate-355 cursor-pointer ${activeModel === m ? "text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50/50 dark:bg-slate-800/40" : ""
+                              }`}
+                          >
+                            {modelLabels[m]}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                  {/* Category Selector Pill */}
                 <div className="relative">

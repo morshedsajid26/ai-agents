@@ -65,6 +65,7 @@ export default function UnifiedDashboard({ defaultTab, showTabs = false }) {
     attachFile,
     activeModel,
     setActiveModel,
+    profile,
   } = useDashboard();
 
   const [showModelMenu, setShowModelMenu] = useState(false);
@@ -242,38 +243,40 @@ export default function UnifiedDashboard({ defaultTab, showTabs = false }) {
           <div className="flex items-center justify-between gap-3 pt-2">
             <div className="flex items-center gap-2">
               {/* Model Selector Pill */}
-              <div className="relative inline-block ml-1">
-                <button
-                  type="button"
-                  onClick={() => setShowModelMenu(!showModelMenu)}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-555 dark:text-slate-450 text-xxs font-bold transition-all duration-150 cursor-pointer"
-                >
-                  <span>{modelLabels[activeModel] || activeModel}</span>
-                  <ChevronDownIcon className="w-2.5 h-2.5 opacity-60" />
-                </button>
+              {profile?.role === "SYSTEM_OWNER" && (
+                <div className="relative inline-block ml-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowModelMenu(!showModelMenu)}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-555 dark:text-slate-450 text-xxs font-bold transition-all duration-150 cursor-pointer"
+                  >
+                    <span>{modelLabels[activeModel] || activeModel}</span>
+                    <ChevronDownIcon className="w-2.5 h-2.5 opacity-60" />
+                  </button>
 
-                {showModelMenu && (
-                  <div className="absolute left-0 bottom-8 z-30 w-32 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-lg p-1 shadow-lg text-xs space-y-0.5 animate-scale-in">
-                    {["GPT", "CLAUDE_HAIKU", "SONNET"].map((m) => (
-                      <button
-                        key={m}
-                        type="button"
-                        onClick={() => {
-                          setActiveModel(m);
-                          setShowModelMenu(false);
-                        }}
-                        className={`w-full text-left px-2 py-1 rounded hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-655 dark:text-slate-350 cursor-pointer ${
-                          activeModel === m
-                            ? "text-indigo-650 dark:text-indigo-400 font-bold bg-indigo-50/50 dark:bg-slate-800/40"
-                            : ""
-                        }`}
-                      >
-                        {modelLabels[m] || m}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+                  {showModelMenu && (
+                    <div className="absolute left-0 bottom-8 z-30 w-32 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-lg p-1 shadow-lg text-xs space-y-0.5 animate-scale-in">
+                      {["GPT", "CLAUDE_HAIKU", "SONNET"].map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => {
+                            setActiveModel(m);
+                            setShowModelMenu(false);
+                          }}
+                          className={`w-full text-left px-2 py-1 rounded hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-655 dark:text-slate-350 cursor-pointer ${
+                            activeModel === m
+                              ? "text-indigo-650 dark:text-indigo-400 font-bold bg-indigo-50/50 dark:bg-slate-800/40"
+                              : ""
+                          }`}
+                        >
+                          {modelLabels[m] || m}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
