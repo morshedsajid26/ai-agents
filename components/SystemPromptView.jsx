@@ -1,8 +1,36 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useDashboard } from "./DashboardContext";
 import { AlertTriangle, CheckCircle2, Globe, ExternalLink } from "lucide-react";
+
+const ExpandableContent = ({ content, formatMarkdown, className, isUser }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const maxLength = 400; // Character limit before showing "See more"
+  
+  if (!content) return null;
+  const isLong = typeof content === 'string' && content.length > maxLength;
+  const displayContent = (isLong && !isExpanded) ? content.slice(0, maxLength) + "..." : content;
+
+  return (
+    <div className={className}>
+      {formatMarkdown(displayContent)}
+      {isLong && (
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className={`text-sm font-bold mt-1.5 transition-colors cursor-pointer block ${
+            isUser 
+              ? "text-indigo-100 hover:text-white underline decoration-indigo-300/50 underline-offset-2" 
+              : "text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+          }`}
+        >
+          {isExpanded ? "See less" : "See more"}
+        </button>
+      )}
+    </div>
+  );
+};
+
 export default function SystemPromptView({ agentFilter }) {
   const { messages, isTyping, activeConversationId, conversationMessages, isLoadingMessages } = useDashboard();
 
@@ -204,9 +232,12 @@ export default function SystemPromptView({ agentFilter }) {
                               <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                               {sec.title}
                             </h4>
-                            <div className="text-base leading-relaxed text-slate-600 dark:text-slate-300">
-                              {formatMarkdown(sec.content)}
-                            </div>
+                            <ExpandableContent 
+                              content={sec.content} 
+                              formatMarkdown={formatMarkdown} 
+                              className="text-base leading-relaxed text-slate-600 dark:text-slate-300" 
+                              isUser={false} 
+                            />
                           </div>
                         ))}
                       </div>
@@ -245,22 +276,31 @@ export default function SystemPromptView({ agentFilter }) {
                           <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                           {sec.title}
                         </h4>
-                        <div className="text-base leading-relaxed text-slate-600 dark:text-slate-300">
-                          {formatMarkdown(sec.content)}
-                        </div>
+                        <ExpandableContent 
+                          content={sec.content} 
+                          formatMarkdown={formatMarkdown} 
+                          className="text-base leading-relaxed text-slate-600 dark:text-slate-300" 
+                          isUser={false} 
+                        />
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-base leading-relaxed font-medium">
-                    {formatMarkdown(msg.text)}
-                  </div>
+                  <ExpandableContent 
+                    content={msg.text} 
+                    formatMarkdown={formatMarkdown} 
+                    className="text-base leading-relaxed font-medium"
+                    isUser={msg.sender === "user"}
+                  />
                 )}
               </div>
             ) : (
-              <div className="text-base leading-relaxed font-medium">
-                {formatMarkdown(msg.text)}
-              </div>
+              <ExpandableContent 
+                content={msg.text} 
+                formatMarkdown={formatMarkdown} 
+                className="text-base leading-relaxed font-medium"
+                isUser={msg.sender === "user"}
+              />
             )}
 
             <div className={`mt-2 text-[11px] opacity-60 font-bold uppercase tracking-wider ${msg.sender === "user" ? "text-right" : "text-left"}`}>
