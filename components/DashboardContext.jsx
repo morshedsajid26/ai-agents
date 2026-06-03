@@ -308,6 +308,14 @@ export const DashboardProvider = ({ children }) => {
       formData.append("userQuery", currentInput);
       formData.append("role", "USER");
       
+      if (attachedFiles && attachedFiles.length > 0) {
+        attachedFiles.forEach(f => {
+          if (f.file) {
+            formData.append("documents", f.file, f.name);
+          }
+        });
+      }
+      
       await apiFetch("/message", {
         method: "POST",
         body: formData,

@@ -72,13 +72,24 @@ export default function UnifiedDashboard({ defaultTab, showTabs = false }) {
   const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      const fileName = e.target.files[0].name;
-      if (!attachedFiles.includes(fileName)) {
-        setAttachedFiles([...attachedFiles, fileName]);
-      }
-      e.target.value = ""; // Reset input
-    }
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newFiles = Array.from(files).map((file, index) => ({
+      id: Date.now().toString() + "_" + index,
+      name: file.name,
+      size: (file.size / 1024).toFixed(1) + " KB",
+      file: file,
+      url: URL.createObjectURL(file),
+    }));
+
+    setAttachedFiles(prev => {
+      const existingNames = prev.map(f => f.name || f);
+      const uniqueNewFiles = newFiles.filter(f => !existingNames.includes(f.name));
+      return [...prev, ...uniqueNewFiles];
+    });
+    
+    e.target.value = ""; // Reset input
   };
 
   // Sync default tab if passed from individual page loaders
@@ -198,6 +209,7 @@ export default function UnifiedDashboard({ defaultTab, showTabs = false }) {
           {/* Hidden file input */}
           <input 
             type="file" 
+            multiple
             ref={fileInputRef} 
             onChange={handleFileChange} 
             className="hidden" 
@@ -208,15 +220,21 @@ export default function UnifiedDashboard({ defaultTab, showTabs = false }) {
             <div className="flex flex-wrap gap-2 max-w-[100%]">
               {attachedFiles.map((file) => (
                 <span
-                  key={file}
-                  className="bg-blue-50 dark:bg-blue-950/40 text-[#2563eb] dark:text-blue-400 text-xs font-bold pl-2 pr-1 py-0.5 rounded-md border border-blue-100 dark:border-blue-900/40 flex items-center gap-1.5 shadow-xxs animate-fade-in"
+                  key={file.id || file}
+                  onClick={() => file.url && window.open(file.url, "_blank")}
+                  className={`bg-blue-50 dark:bg-blue-950/40 text-[#2563eb] dark:text-blue-400 text-xs font-bold pl-2 pr-1 py-0.5 rounded-md border border-blue-100 dark:border-blue-900/40 flex items-center gap-1.5 shadow-xxs animate-fade-in ${file.url ? "cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/60" : ""}`}
+                  title={file.url ? "Click to preview file" : ""}
                 >
                   <FileIcon className="w-2.5 h-2.5 shrink-0" />
-                  <span className="truncate max-w-[150px]">{file}</span>
+                  <span className="truncate max-w-[150px]">{file.name || file}</span>
                   <button
                     type="button"
-                    onClick={() => setAttachedFiles(attachedFiles.filter(f => f !== file))}
-                    className="p-0.5 hover:bg-blue-200 dark:hover:bg-blue-800/60 rounded-sm transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (file.url) URL.revokeObjectURL(file.url);
+                      setAttachedFiles(attachedFiles.filter(f => (f.id || f) !== (file.id || file)));
+                    }}
+                    className="p-0.5 hover:bg-blue-200 dark:hover:bg-blue-800/60 rounded-sm transition-colors ml-1"
                   >
                     <X className="w-3 h-3" />
                   </button>

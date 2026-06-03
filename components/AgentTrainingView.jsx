@@ -6,6 +6,7 @@ import { useToast } from "./Toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch } from "../utils/api";
 import toast from "react-hot-toast";
+import { X } from "lucide-react";
 import {
   PaperclipIcon,
   LightningIcon,
@@ -463,63 +464,6 @@ export default function AgentTrainingView() {
             <div ref={consoleEndRef} />
           </div>
 
-          {/* Attached Files & Images list above the input capsule */}
-          {(attachedFiles.length > 0 || attachedImages.length > 0) && (
-            <div className="flex flex-wrap gap-3 max-w-2xl mx-auto w-full px-4 mb-3 animate-fade-in items-end">
-              {/* File Badges */}
-              {attachedFiles.map((file) => (
-                <div
-                  key={file.id}
-                  onClick={() => window.open(file.url, "_blank")}
-                  className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-3 py-1.5 rounded-xl border border-indigo-150 dark:border-indigo-900/40 flex items-center gap-2 shadow-xxs hover:border-indigo-300 dark:hover:border-indigo-850 group transition-all duration-150 relative cursor-pointer"
-                  title="Click to preview file"
-                >
-                  <FileIcon className="w-3.5 h-3.5 shrink-0" />
-                  <div className="flex flex-col">
-                    <span className="truncate max-w-[120px]">{file.name}</span>
-                    <span className="text-[8px] opacity-60 font-semibold">{file.size}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemoveFile(file.id);
-                    }}
-                    className="h-4 w-4 rounded-full flex items-center justify-center bg-indigo-200/50 hover:bg-indigo-200 dark:bg-indigo-900/40 dark:hover:bg-indigo-850 text-indigo-600 dark:text-indigo-400 cursor-pointer ml-1 text-xs font-bold"
-                    title="Remove attachment"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-
-              {/* Image Previews */}
-              {attachedImages.map((img) => (
-                <div
-                  key={img.id}
-                  className="relative group h-14 w-14 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-200 hover:scale-105"
-                >
-                  <img
-                    src={img.url}
-                    alt={img.name}
-                    className="h-full w-full object-cover"
-                  />
-                  {/* Dark overlay on hover */}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveImage(img.id)}
-                      className="h-5 w-5 rounded-full bg-red-500/80 hover:bg-red-500 text-white flex items-center justify-center cursor-pointer transition-colors shadow-sm"
-                      title="Remove Image"
-                    >
-                      <span className="text-sm font-black leading-none">×</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* PREMIUM CAPSULE CHAT INPUT BAR - MATCHING SCREENSHOT EXACTLY (THEME DYNAMIC) */}
           <form
             onSubmit={handleTrainSubmit}
@@ -541,6 +485,59 @@ export default function AgentTrainingView() {
               onChange={handleImageChange}
               className="hidden"
             />
+
+            {/* Attached Files & Images list inside the input capsule */}
+            {(attachedFiles.length > 0 || attachedImages.length > 0) && (
+              <div className="flex flex-wrap gap-2 w-full px-2 animate-fade-in items-end">
+                {/* File Badges */}
+                {attachedFiles.map((file) => (
+                  <span
+                    key={file.id}
+                    onClick={() => file.url && window.open(file.url, "_blank")}
+                    className="bg-blue-50 dark:bg-blue-950/40 text-[#2563eb] dark:text-blue-400 text-xs font-bold pl-2 pr-1 py-0.5 rounded-md border border-blue-100 dark:border-blue-900/40 flex items-center gap-1.5 shadow-xxs animate-fade-in cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/60"
+                    title="Click to preview file"
+                  >
+                    <FileIcon className="w-2.5 h-2.5 shrink-0" />
+                    <span className="truncate max-w-[150px]">{file.name}</span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveFile(file.id);
+                      }}
+                      className="p-0.5 hover:bg-blue-200 dark:hover:bg-blue-800/60 rounded-sm transition-colors ml-1"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+
+                {/* Image Previews */}
+                {attachedImages.map((img) => (
+                  <div
+                    key={img.id}
+                    className="relative group h-14 w-14 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-200 hover:scale-105"
+                  >
+                    <img
+                      src={img.url}
+                      alt={img.name}
+                      className="h-full w-full object-cover"
+                    />
+                    {/* Dark overlay on hover */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(img.id)}
+                        className="h-5 w-5 rounded-full bg-red-500/80 hover:bg-red-500 text-white flex items-center justify-center cursor-pointer transition-colors shadow-sm"
+                        title="Remove Image"
+                      >
+                        <span className="text-sm font-black leading-none">×</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Input Row */}
             <textarea
