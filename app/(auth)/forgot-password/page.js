@@ -6,10 +6,10 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Mail, Sun, Moon, ArrowRight, ArrowLeft, KeyRound } from "lucide-react";
 import toast from "react-hot-toast";
-import InputField from "../../components/InputField";
-import { useDashboard } from "../../components/DashboardContext";
+import InputField from "../../../components/InputField";
+import { useDashboard } from "../../../components/DashboardContext";
 
-import { apiFetch } from "../../utils/api";
+import { apiFetch } from "../../../utils/api";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
