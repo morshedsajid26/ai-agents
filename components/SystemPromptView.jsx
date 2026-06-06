@@ -176,7 +176,7 @@ export default function SystemPromptView({ agentFilter }) {
             }`}
           >
             <div className="mb-2 text-sm opacity-75 font-bold uppercase tracking-wider">
-              {msg.sender === "user" ? "You" : "Prompt Architect AI"}
+              {msg.sender === "user" ? "You" : "AI Analysis"}
             </div>
             
             {msg.sender === "ai" && msg.structuredData ? (
